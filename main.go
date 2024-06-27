@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"math/rand/v2"
 
 	"gcoletta.it/2d2/gui"
 )
@@ -9,14 +10,19 @@ import (
 func main() {
 
 	cellSize := float32(20)
-	gridSize := 30
 
-	g, matrix := gui.Make(gridSize, gui.MakeOptions{CellSize: &cellSize})
-
-	matrix[5][0] = true
+	g := gui.Make(15, 30, gui.MakeOptions{
+		CellSize:       &cellSize,
+		UpdateCallback: update,
+	})
 
 	if err := g.Start(); err != nil {
 		log.Fatal(err)
 	}
+}
 
+func update(matrix gui.Matrix) {
+	x := rand.IntN(len(matrix))
+	y := rand.IntN(len(matrix[0]))
+	matrix[x][y] = rand.IntN(2) > 0
 }
