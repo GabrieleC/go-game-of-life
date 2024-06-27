@@ -1,4 +1,4 @@
-module gcoletta.it/2d2
+module gcoletta.it/game-of-life
 
 go 1.22.4
 
