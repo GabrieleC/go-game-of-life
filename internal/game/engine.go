@@ -1,8 +1,4 @@
-package engine
-
-import "gcoletta.it/game-of-life/internal/matrix"
-
-type Grid matrix.Matrix
+package game
 
 type coord struct {
 	row, col int
@@ -16,13 +12,13 @@ type coord struct {
 	- Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 */
 
-func Iterate(oldGrid Grid) Grid {
-	newGrid := Grid(matrix.NewMatrix(len(oldGrid), len(oldGrid[0])))
+func Iterate(oldGrid Matrix) Matrix {
+	newGrid := NewMatrix(len(oldGrid), len(oldGrid[0]))
 	iterateGrid(oldGrid, newGrid)
 	return newGrid
 }
 
-func iterateGrid(oldGrid Grid, newGrid Grid) {
+func iterateGrid(oldGrid Matrix, newGrid Matrix) {
 	for row := range oldGrid {
 		for col := range oldGrid[row] {
 			newGrid[row][col] = iterateCell(oldGrid, row, col)
@@ -30,7 +26,7 @@ func iterateGrid(oldGrid Grid, newGrid Grid) {
 	}
 }
 
-func iterateCell(g Grid, row, col int) bool {
+func iterateCell(g Matrix, row, col int) bool {
 	aliveNeighbours := countActiveNeighbours(g, row, col)
 	wasAlive := g[row][col]
 	return remainsAlive(wasAlive, aliveNeighbours) || comesAlive(wasAlive, aliveNeighbours)
@@ -44,7 +40,7 @@ func comesAlive(currentAlive bool, aliveNeighbours int) bool {
 	return !currentAlive && aliveNeighbours == 3
 }
 
-func countActiveNeighbours(g Grid, row, col int) int {
+func countActiveNeighbours(g Matrix, row, col int) int {
 	count := 0
 	for _, c := range neighbourCells(row, col) {
 		if coordExists(g, c) {
@@ -70,14 +66,14 @@ func neighbourCells(row, col int) [8]coord {
 	}
 }
 
-func coordExists(g Grid, c coord) bool {
+func coordExists(g Matrix, c coord) bool {
 	return rowExists(g, c.row) && colExists(g, c.col)
 }
 
-func rowExists(g Grid, row int) bool {
+func rowExists(g Matrix, row int) bool {
 	return row >= 0 && row < len(g)
 }
 
-func colExists(g Grid, col int) bool {
+func colExists(g Matrix, col int) bool {
 	return col >= 0 && col < len(g[0])
 }

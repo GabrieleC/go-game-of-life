@@ -3,17 +3,17 @@ package patterns
 import (
 	"strings"
 
-	"gcoletta.it/game-of-life/internal/matrix"
+	"gcoletta.it/game-of-life/internal/game"
 )
 
-func unmarshal(input string) matrix.Matrix {
+func unmarshal(input string) game.Matrix {
 
 	rows := strings.Split(input, "\n")
 
 	colsCount := maxLength(rows)
 	rowsCount := len(rows)
 
-	matrix := matrix.NewMatrix(rowsCount, colsCount)
+	matrix := game.NewMatrix(rowsCount, colsCount)
 	writeInMatrix(rows, matrix)
 
 	return matrix

@@ -2,54 +2,91 @@ package game
 
 import (
 	"time"
-
-	"gcoletta.it/game-of-life/internal/engine"
-	"gcoletta.it/game-of-life/internal/gui"
-	"gcoletta.it/game-of-life/internal/matrix"
-	"gcoletta.it/game-of-life/internal/patterns"
 )
 
 type Game struct {
-	gui          gui.Gui
-	fps          int
-	altRequested bool
+	gui           Gui
+	fps           int
+	altRequested  bool
+	currentlyPlay bool
 }
 
-func New(gui gui.Gui, fps int) Game {
-	return Game{gui: gui, fps: 1}
+type MatrixUpdater func(old Matrix) Matrix
+
+type Callbacks struct {
+	Quit            func()
+	Pause           func()
+	Play            func()
+	TogglePlayPause func()
+	SpeedUp         func()
+	SpeedDown       func()
+}
+
+type Gui interface {
+	Start() error
+	Stop()
+	SetCallbacks(callbacks Callbacks)
+	UpdateMatrix(update MatrixUpdater)
+}
+
+type Options struct {
+	Fps           int
+	InitialMatrix Matrix
+}
+
+func New(gui Gui, opts Options) Game {
+
+	if opts.InitialMatrix != nil {
+		gui.UpdateMatrix(func(m Matrix) Matrix {
+			return opts.InitialMatrix
+		})
+	}
+
+	fps := 1
+	if opts.Fps > 0 {
+		fps = opts.Fps
+	}
+
+	return Game{gui: gui, fps: fps}
 }
 
 func (game *Game) Execute() {
 
-	game.gui.SetCallbacks(gui.Callbacks{
-		Quit:      game.quit,
-		SpeedUp:   game.speedUp,
-		SpeedDown: game.speedDown,
-	})
-
-	game.gui.UpdateMatrix(func(m gui.Matrix) gui.Matrix {
-		patterns.Glider(matrix.Matrix(m), 1, 1)
-		patterns.Pulsar(matrix.Matrix(m), 8, 8)
-		return m
+	game.gui.SetCallbacks(Callbacks{
+		Quit:            game.quit,
+		SpeedUp:         game.speedUp,
+		SpeedDown:       game.speedDown,
+		TogglePlayPause: game.TogglePlayPause,
 	})
 
 	game.Play()
 }
 
 func (game *Game) Play() {
+	game.currentlyPlay = true
 	go func() {
 		for {
 			if game.altRequested {
+				game.altRequested = false
 				break
 			}
 			time.Sleep(time.Duration(1_000_000_000 / game.fps))
-			game.gui.UpdateMatrix(matrixUpdater)
+			game.gui.UpdateMatrix(Iterate)
 		}
 	}()
 }
 
 func (game *Game) Pause() {
+	game.currentlyPlay = false
 	game.altRequested = true
+}
+
+func (game *Game) TogglePlayPause() {
+	if game.currentlyPlay {
+		game.Pause()
+	} else {
+		game.Play()
+	}
 }
 
 func (game *Game) quit() {
@@ -65,10 +102,4 @@ func (game *Game) speedDown() {
 	if game.fps > 1 {
 		game.fps -= 1
 	}
-}
-
-func matrixUpdater(old gui.Matrix) gui.Matrix {
-	oldGrid := engine.Grid(old)
-	newGrid := engine.Iterate(oldGrid)
-	return gui.Matrix(matrix.Matrix(newGrid))
 }

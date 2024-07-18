@@ -1,4 +1,4 @@
-package matrix
+package game
 
 type Matrix [][]bool
 
