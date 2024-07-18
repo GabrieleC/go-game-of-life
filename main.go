@@ -1,30 +1,18 @@
 package main
 
 import (
-	"log"
-	"math/rand/v2"
-
-	"gcoletta.it/game-of-life/gui"
+	"gcoletta.it/game-of-life/internal/gui"
+	"gcoletta.it/game-of-life/internal/game"
 )
 
 func main() {
 
-	g := gui.Make(15, 30, gui.MakeOptions{
-		CellSize:       20,
-		UpdateCallback: onGuiUpdate,
-	})
+	g := gui.New(30, 30, gui.Options{CellSize: 20})
+	game := game.New(g, 1)
+	game.Execute()
 
-	startGui(g)
-}
-
-func startGui(g gui.Gui) {
-	if err := g.Start(); err != nil {
-		log.Fatal(err)
+	err := g.Start()
+	if err != nil {
+		panic(err)
 	}
-}
-
-func onGuiUpdate(matrix gui.Matrix) {
-	x := rand.IntN(len(matrix))
-	y := rand.IntN(len(matrix[0]))
-	matrix[x][y] = rand.IntN(2) > 0
 }
