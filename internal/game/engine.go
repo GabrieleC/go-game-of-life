@@ -12,10 +12,10 @@ type coord struct {
 	- Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 */
 
-func Iterate(oldGrid Matrix) Matrix {
-	newGrid := NewMatrix(len(oldGrid), len(oldGrid[0]))
-	iterateGrid(oldGrid, newGrid)
-	return newGrid
+func Iterate(old Matrix) Matrix {
+	new := NewMatrix(len(old), len(old[0]))
+	iterateGrid(old, new)
+	return new
 }
 
 func iterateGrid(oldGrid Matrix, newGrid Matrix) {

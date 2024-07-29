@@ -4,29 +4,24 @@ import (
 	"time"
 )
 
-type Game struct {
-	gui           Gui
-	fps           int
-	altRequested  bool
-	currentlyPlay bool
-}
-
 type MatrixUpdater func(old Matrix) Matrix
-
-type Callbacks struct {
-	Quit            func()
-	Pause           func()
-	Play            func()
-	TogglePlayPause func()
-	SpeedUp         func()
-	SpeedDown       func()
-}
 
 type Gui interface {
 	Start() error
 	Stop()
-	SetCallbacks(callbacks Callbacks)
+	SetGame(callback Game)
 	UpdateMatrix(update MatrixUpdater)
+}
+
+type Game interface {
+	Quit()
+	Pause()
+	Play()
+	TogglePlayPause()
+	SpeedUp()
+	SpeedDown()
+	Back()
+	Next()
 }
 
 type Options struct {
@@ -34,9 +29,20 @@ type Options struct {
 	InitialMatrix Matrix
 }
 
-func New(gui Gui, opts Options) Game {
+type GameImpl struct {
+	gui           Gui
+	history       History
+	fps           int
+	altRequested  bool
+	currentlyPlay bool
+}
+
+func New(gui Gui, opts Options) *GameImpl {
+
+	history := History{timeline: make([]Matrix, 0, 100)}
 
 	if opts.InitialMatrix != nil {
+		history.append(opts.InitialMatrix)
 		gui.UpdateMatrix(func(m Matrix) Matrix {
 			return opts.InitialMatrix
 		})
@@ -47,22 +53,16 @@ func New(gui Gui, opts Options) Game {
 		fps = opts.Fps
 	}
 
-	return Game{gui: gui, fps: fps}
+	game := GameImpl{
+		gui:     gui,
+		fps:     fps,
+		history: history,
+	}
+
+	return &game
 }
 
-func (game *Game) Execute() {
-
-	game.gui.SetCallbacks(Callbacks{
-		Quit:            game.quit,
-		SpeedUp:         game.speedUp,
-		SpeedDown:       game.speedDown,
-		TogglePlayPause: game.TogglePlayPause,
-	})
-
-	game.Play()
-}
-
-func (game *Game) Play() {
+func (game *GameImpl) Play() {
 	game.currentlyPlay = true
 	go func() {
 		for {
@@ -71,17 +71,19 @@ func (game *Game) Play() {
 				break
 			}
 			time.Sleep(time.Duration(1_000_000_000 / game.fps))
-			game.gui.UpdateMatrix(Iterate)
+			game.forward()
 		}
 	}()
 }
 
-func (game *Game) Pause() {
-	game.currentlyPlay = false
-	game.altRequested = true
+func (game *GameImpl) Pause() {
+	if game.currentlyPlay {
+		game.currentlyPlay = false
+		game.altRequested = true
+	}
 }
 
-func (game *Game) TogglePlayPause() {
+func (game *GameImpl) TogglePlayPause() {
 	if game.currentlyPlay {
 		game.Pause()
 	} else {
@@ -89,17 +91,42 @@ func (game *Game) TogglePlayPause() {
 	}
 }
 
-func (game *Game) quit() {
+func (game *GameImpl) Quit() {
 	game.altRequested = true
 	game.gui.Stop()
 }
 
-func (game *Game) speedUp() {
+func (game *GameImpl) SpeedUp() {
 	game.fps += 1
 }
 
-func (game *Game) speedDown() {
+func (game *GameImpl) SpeedDown() {
 	if game.fps > 1 {
 		game.fps -= 1
 	}
+}
+
+func (game *GameImpl) Back() {
+	game.Pause()
+
+	matrix := game.history.back()
+	if matrix != nil {
+		game.gui.UpdateMatrix(func(old Matrix) Matrix { return matrix })
+	}
+}
+
+func (game *GameImpl) Next() {
+	game.Pause()
+	game.forward()
+}
+
+func (game *GameImpl) forward() {
+	matrix := game.history.forward()
+	if matrix == nil {
+		matrix = Iterate(game.history.peek())
+		game.history.append(matrix)
+		game.history.forward()
+	}
+
+	game.gui.UpdateMatrix(func(old Matrix) Matrix { return matrix })
 }

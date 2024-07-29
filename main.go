@@ -3,25 +3,26 @@ package main
 import (
 	"log"
 
-	"gcoletta.it/game-of-life/internal/ebidenUi"
+	"gcoletta.it/game-of-life/internal/d2dui"
 	"gcoletta.it/game-of-life/internal/game"
 	"gcoletta.it/game-of-life/internal/patterns"
 )
 
 func main() {
 
-	gui := ebidenUi.New(60, 120, ebidenUi.Options{CellSize: 10})
-	matrix := game.NewMatrix(60, 120)
-	patterns.Glider(game.Matrix(matrix), 1, 1)
-	patterns.Pulsar(game.Matrix(matrix), 24, 24)
+	ui := d2dui.New()
+	matrix := game.NewMatrix(60, 60)
+	patterns.Glider(matrix, 1, 1)
+	patterns.Pulsar(matrix, 24, 24)
 
-	game := game.New(gui, game.Options{
+	game := game.New(ui, game.Options{
 		Fps:           1,
 		InitialMatrix: matrix,
 	})
-	game.Execute()
+	ui.SetGame(game)
+	game.Play()
 
-	err := gui.Start()
+	err := ui.Start()
 	if err != nil {
 		log.Println(err)
 	}

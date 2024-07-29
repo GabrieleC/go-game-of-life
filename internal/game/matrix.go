@@ -17,3 +17,15 @@ func (destination *Matrix) Copy(source Matrix, originRow int, originCol int) {
 		}
 	}
 }
+
+func (m Matrix) Rows() int {
+	return len(m)
+}
+
+func (m Matrix) Cols() int {
+	if len(m) > 0 {
+		return len(m[0])
+	} else {
+		return 0
+	}
+}
