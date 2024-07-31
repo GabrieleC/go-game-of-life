@@ -3,8 +3,8 @@ package d2dui
 import (
 	"runtime"
 
+	"gcoletta.it/game-of-life/internal/d2dui/area"
 	"gcoletta.it/game-of-life/internal/d2dui/grid"
-	"gcoletta.it/game-of-life/internal/d2dui/matrixwin"
 	"gcoletta.it/game-of-life/internal/game"
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
@@ -16,12 +16,12 @@ func init() {
 }
 
 type D2dui struct {
-	game          game.Game
-	matrix        game.Matrix
-	matrixwin     *matrixwin.Window
-	redraw        bool
-	width, height int
-	stopRequested bool
+	game                game.Game
+	matrix              game.Matrix
+	grid                grid.Grid
+	redraw              bool
+	winWidth, winHeight int
+	stopRequested       bool
 }
 
 func New() *D2dui {
@@ -29,9 +29,9 @@ func New() *D2dui {
 	height := 800
 	return &D2dui{
 		redraw:    true,
-		width:     width,
-		height:    height,
-		matrixwin: &matrixwin.Window{},
+		winWidth:  width,
+		winHeight: height,
+		grid:      grid.New(),
 	}
 }
 
@@ -41,7 +41,7 @@ func (ui *D2dui) Start() error {
 		return err
 	}
 
-	window, err := glfw.CreateWindow(ui.width, ui.height, "Show RoundedRect", nil, nil)
+	window, err := glfw.CreateWindow(ui.winWidth, ui.winHeight, "Show RoundedRect", nil, nil)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (ui *D2dui) Start() error {
 		return err
 	}
 
-	ui.reshape(window, ui.width, ui.height)
+	ui.reshape(window, ui.winWidth, ui.winHeight)
 
 	for !ui.stopRequested {
 		if ui.redraw {
@@ -81,11 +81,8 @@ func (ui *D2dui) SetGame(game game.Game) {
 }
 
 func (ui *D2dui) UpdateMatrix(update game.MatrixUpdater) {
-	newMatrix := update(ui.matrix)
-	if ui.matrix == nil {
-		ui.updateWindow()
-	}
-	ui.matrix = newMatrix
+	ui.matrix = update(ui.matrix)
+	ui.grid.UpdateMatrix(ui.matrix)
 	ui.invalidate()
 }
 
@@ -95,63 +92,11 @@ func (ui *D2dui) invalidate() {
 
 func (ui *D2dui) display() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	gc := draw2dgl.NewGraphicContext(ui.width, ui.height)
-	ui.drawGrid(gc)
+	gc := draw2dgl.NewGraphicContext(ui.winWidth, ui.winHeight)
+	gridArea := area.Area{Width: ui.winWidth, Height: ui.winHeight}
+	gridOrigin := grid.Coord{X: 0, Y: 0}
+	ui.grid.Draw(gc, gridOrigin, gridArea)
 	gl.Flush()
-}
-
-func (ui *D2dui) drawGrid(gc *draw2dgl.GraphicContext) {
-	rows, cols := ui.matrixwin.Dimensions()
-	width, height := ui.calculateGridDimensions()
-
-	gridDesc := grid.Description{
-		OriginX: 0,
-		OriginY: 0,
-		Width:   width,
-		Height:  height,
-		Rows:    rows,
-		Cols:    cols,
-	}
-
-	grid.Draw(gc, gridDesc)
-	ui.drawAliveCells(gc, gridDesc)
-}
-
-func (ui *D2dui) drawAliveCells(gc *draw2dgl.GraphicContext, gridDesc grid.Description) {
-
-	maxRow, maxCol := ui.matrixwin.Dimensions()
-
-	for row := 0; row < maxRow; row++ {
-		for col := 0; col < maxCol; col++ {
-			matrixRow, matrixCol := ui.matrixwin.Coords(row, col)
-			if ui.matrix[matrixRow][matrixCol] {
-				grid.DrawAliveCell(gc, gridDesc, row, col)
-			}
-		}
-	}
-
-}
-
-func (ui *D2dui) calculateGridDimensions() (int, int) {
-	cols, rows := ui.matrixwin.Dimensions()
-	var width, height int
-
-	tallerThanWiderComparision := isTallerThanWider(
-		area{float64(ui.width), float64(ui.height)},
-		area{float64(cols), float64(rows)},
-	)
-
-	if tallerThanWiderComparision > 0 {
-		matrixRatio := float64(cols) / float64(rows)
-		width = int(float64(ui.height) * matrixRatio)
-		height = ui.height
-	} else {
-		matrixRatio := float64(rows) / float64(cols)
-		height = int(float64(ui.width) * matrixRatio)
-		width = ui.width
-	}
-
-	return width, height
 }
 
 func (ui *D2dui) reshape(window *glfw.Window, w, h int) {
@@ -171,14 +116,7 @@ func (ui *D2dui) reshape(window *glfw.Window, w, h int) {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Disable(gl.DEPTH_TEST)
-	ui.width, ui.height = w, h
-
-	ui.updateWindow()
-	ui.invalidate()
-}
-
-func (ui *D2dui) updateWindow() {
-	ui.matrixwin.Update(ui.matrix.Rows(), ui.matrix.Cols())
+	ui.winWidth, ui.winHeight = w, h
 	ui.invalidate()
 }
 
@@ -195,16 +133,16 @@ func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.A
 	if action == glfw.Press || action == glfw.Repeat {
 		switch {
 		case key == glfw.KeyRight:
-			ui.matrixwin.HorizontalPan(1)
+			ui.grid.HorizontalPan(1)
 			ui.invalidate()
 		case key == glfw.KeyLeft:
-			ui.matrixwin.HorizontalPan(-1)
+			ui.grid.HorizontalPan(-1)
 			ui.invalidate()
 		case key == glfw.KeyUp:
-			ui.matrixwin.VerticalPan(-1)
+			ui.grid.VerticalPan(-1)
 			ui.invalidate()
 		case key == glfw.KeyDown:
-			ui.matrixwin.VerticalPan(1)
+			ui.grid.VerticalPan(1)
 			ui.invalidate()
 		case key == glfw.KeyN:
 			ui.game.SpeedDown()
@@ -215,10 +153,10 @@ func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.A
 		case key == glfw.KeyL:
 			ui.game.Next()
 		case key == glfw.KeyO:
-			ui.matrixwin.ZoomIn()
+			ui.grid.ZoomIn()
 			ui.invalidate()
 		case key == glfw.KeyP:
-			ui.matrixwin.ZoomOut()
+			ui.grid.ZoomOut()
 			ui.invalidate()
 		}
 	}
