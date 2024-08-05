@@ -1,22 +1,23 @@
 package game
 
 import (
-	"time"
+	"gcoletta.it/game-of-life/internal/game/periodicjob"
 )
 
 type MatrixUpdater func(old Matrix) Matrix
 
-type Gui interface {
+type UserInterface interface {
 	Start() error
 	Stop()
 	SetGame(callback Game)
-	UpdateMatrix(update MatrixUpdater)
+	UpdateMatrix(matrix Matrix)
 }
 
 type Game interface {
+	Start() error
 	Quit()
-	Pause()
 	Play()
+	Pause()
 	TogglePlayPause()
 	SpeedUp()
 	SpeedDown()
@@ -30,22 +31,22 @@ type Options struct {
 }
 
 type GameImpl struct {
-	gui           Gui
-	history       History
-	fps           int
-	altRequested  bool
-	currentlyPlay bool
+	ui              UserInterface
+	history         History
+	fps             int
+	currentlyPlay   bool
+	updateChan      chan MatrixUpdater
+	forwardJob      periodicjob.PeriodicJob
+	listenerChannel chan struct{}
 }
 
-func New(gui Gui, opts Options) *GameImpl {
+func New(ui UserInterface, opts Options) *GameImpl {
 
 	history := History{timeline: make([]Matrix, 0, 100)}
 
 	if opts.InitialMatrix != nil {
 		history.append(opts.InitialMatrix)
-		gui.UpdateMatrix(func(m Matrix) Matrix {
-			return opts.InitialMatrix
-		})
+		ui.UpdateMatrix(opts.InitialMatrix)
 	}
 
 	fps := 1
@@ -54,33 +55,32 @@ func New(gui Gui, opts Options) *GameImpl {
 	}
 
 	game := GameImpl{
-		gui:     gui,
-		fps:     fps,
-		history: history,
+		ui:              ui,
+		fps:             fps,
+		history:         history,
+		updateChan:      make(chan MatrixUpdater),
+		listenerChannel: make(chan struct{}),
 	}
+
+	ui.SetGame(&game)
+
+	go game.listenUpdates()
+	game.forwardJob = periodicjob.New(fpsToInterval(fps), game.periodicForward)
 
 	return &game
 }
 
+func (game *GameImpl) Start() error {
+	err := game.ui.Start()
+	return err
+}
+
 func (game *GameImpl) Play() {
 	game.currentlyPlay = true
-	go func() {
-		for {
-			if game.altRequested {
-				game.altRequested = false
-				break
-			}
-			time.Sleep(time.Duration(1_000_000_000 / game.fps))
-			game.forward()
-		}
-	}()
 }
 
 func (game *GameImpl) Pause() {
-	if game.currentlyPlay {
-		game.currentlyPlay = false
-		game.altRequested = true
-	}
+	game.currentlyPlay = false
 }
 
 func (game *GameImpl) TogglePlayPause() {
@@ -91,18 +91,22 @@ func (game *GameImpl) TogglePlayPause() {
 	}
 }
 
-func (game *GameImpl) Quit() {
-	game.altRequested = true
-	game.gui.Stop()
-}
-
 func (game *GameImpl) SpeedUp() {
-	game.fps += 1
+	game.updateFps(game.fps + 1)
 }
 
 func (game *GameImpl) SpeedDown() {
 	if game.fps > 1 {
-		game.fps -= 1
+		game.updateFps(game.fps - 1)
+	}
+}
+
+func (game *GameImpl) Quit() {
+	game.ui.Stop()
+	game.forwardJob.Cancel()
+	if game.listenerChannel != nil {
+		close(game.listenerChannel)
+		game.listenerChannel = nil
 	}
 }
 
@@ -111,7 +115,7 @@ func (game *GameImpl) Back() {
 
 	matrix := game.history.back()
 	if matrix != nil {
-		game.gui.UpdateMatrix(func(old Matrix) Matrix { return matrix })
+		game.ui.UpdateMatrix(matrix)
 	}
 }
 
@@ -120,13 +124,48 @@ func (game *GameImpl) Next() {
 	game.forward()
 }
 
+func (game *GameImpl) UpdateMatrix(update MatrixUpdater) {
+	game.updateChan <- update
+}
+
+func (game *GameImpl) updateFps(fps int) {
+	game.fps = fps
+	game.forwardJob.SetInterval(fpsToInterval(game.fps))
+}
+
 func (game *GameImpl) forward() {
 	matrix := game.history.forward()
-	if matrix == nil {
-		matrix = Iterate(game.history.peek())
-		game.history.append(matrix)
-		game.history.forward()
+	if matrix != nil {
+		game.ui.UpdateMatrix(matrix)
+	} else {
+		game.UpdateMatrix(Iterate)
 	}
+}
 
-	game.gui.UpdateMatrix(func(old Matrix) Matrix { return matrix })
+func (game *GameImpl) periodicForward() {
+	if game.currentlyPlay {
+		game.forward()
+	}
+}
+
+func (game *GameImpl) listenUpdates() {
+	for {
+		select {
+		case update := <-game.updateChan:
+			game.applyUpdate(update)
+		case <-game.listenerChannel:
+			break
+		}
+	}
+}
+
+func (game *GameImpl) applyUpdate(update MatrixUpdater) {
+	matrix := update(game.history.peek())
+	game.history.append(matrix)
+	game.history.forward()
+	game.ui.UpdateMatrix(matrix)
+}
+
+func fpsToInterval(fps int) int {
+	return 1_000_000_000 / fps
 }

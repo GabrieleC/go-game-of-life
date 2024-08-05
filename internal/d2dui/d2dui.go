@@ -80,8 +80,8 @@ func (ui *D2dui) SetGame(game game.Game) {
 	ui.game = game
 }
 
-func (ui *D2dui) UpdateMatrix(update game.MatrixUpdater) {
-	ui.matrix = update(ui.matrix)
+func (ui *D2dui) UpdateMatrix(matrix game.Matrix) {
+	ui.matrix = matrix
 	ui.grid.UpdateMatrix(ui.matrix)
 	ui.invalidate()
 }
