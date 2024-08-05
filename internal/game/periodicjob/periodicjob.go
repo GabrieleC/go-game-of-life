@@ -5,17 +5,17 @@ import (
 )
 
 type PeriodicJob interface {
-	SetInterval(interval int)
+	SetInterval(interval time.Duration)
 	Cancel()
 }
 
 type Impl struct {
-	interval int
+	interval time.Duration
 	callback func()
 	canceled bool
 }
 
-func New(interval int, callback func()) *Impl {
+func New(interval time.Duration, callback func()) *Impl {
 	job := Impl{
 		interval: interval,
 		callback: callback,
@@ -29,7 +29,7 @@ func (job *Impl) periodicExecute() {
 		startTime := time.Now()
 		job.callback()
 		elapsedTime := time.Now().Sub(startTime)
-		time.Sleep(time.Duration(job.interval) - elapsedTime)
+		time.Sleep(job.interval - elapsedTime)
 		if job.canceled {
 			break
 		}
@@ -40,6 +40,6 @@ func (job *Impl) Cancel() {
 	job.canceled = true
 }
 
-func (job *Impl) SetInterval(interval int) {
+func (job *Impl) SetInterval(interval time.Duration) {
 	job.interval = interval
 }

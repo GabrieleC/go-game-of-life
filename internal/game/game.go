@@ -1,6 +1,8 @@
 package game
 
 import (
+	"time"
+
 	"gcoletta.it/game-of-life/internal/game/periodicjob"
 )
 
@@ -31,13 +33,13 @@ type Options struct {
 }
 
 type GameImpl struct {
-	ui              UserInterface
-	history         History
-	fps             int
-	currentlyPlay   bool
-	updateChan      chan MatrixUpdater
-	forwardJob      periodicjob.PeriodicJob
-	listenerChannel chan struct{}
+	ui            UserInterface
+	history       History
+	fps           int
+	currentlyPlay bool
+	updateChan    chan MatrixUpdater
+	forwardJob    periodicjob.PeriodicJob
+	quitChan      chan struct{}
 }
 
 func New(ui UserInterface, opts Options) *GameImpl {
@@ -55,17 +57,16 @@ func New(ui UserInterface, opts Options) *GameImpl {
 	}
 
 	game := GameImpl{
-		ui:              ui,
-		fps:             fps,
-		history:         history,
-		updateChan:      make(chan MatrixUpdater),
-		listenerChannel: make(chan struct{}),
+		ui:         ui,
+		fps:        fps,
+		history:    history,
+		updateChan: make(chan MatrixUpdater),
+		quitChan:   make(chan struct{}),
 	}
 
 	ui.SetGame(&game)
-
 	go game.listenUpdates()
-	game.forwardJob = periodicjob.New(fpsToInterval(fps), game.periodicForward)
+	game.forwardJob = periodicjob.New(fpsToDuration(fps), game.periodicForward)
 
 	return &game
 }
@@ -104,9 +105,9 @@ func (game *GameImpl) SpeedDown() {
 func (game *GameImpl) Quit() {
 	game.ui.Stop()
 	game.forwardJob.Cancel()
-	if game.listenerChannel != nil {
-		close(game.listenerChannel)
-		game.listenerChannel = nil
+	if game.quitChan != nil {
+		close(game.quitChan)
+		game.quitChan = nil
 	}
 }
 
@@ -130,7 +131,7 @@ func (game *GameImpl) UpdateMatrix(update MatrixUpdater) {
 
 func (game *GameImpl) updateFps(fps int) {
 	game.fps = fps
-	game.forwardJob.SetInterval(fpsToInterval(game.fps))
+	game.forwardJob.SetInterval(fpsToDuration(game.fps))
 }
 
 func (game *GameImpl) forward() {
@@ -153,7 +154,7 @@ func (game *GameImpl) listenUpdates() {
 		select {
 		case update := <-game.updateChan:
 			game.applyUpdate(update)
-		case <-game.listenerChannel:
+		case <-game.quitChan:
 			break
 		}
 	}
@@ -166,6 +167,7 @@ func (game *GameImpl) applyUpdate(update MatrixUpdater) {
 	game.ui.UpdateMatrix(matrix)
 }
 
-func fpsToInterval(fps int) int {
-	return 1_000_000_000 / fps
+func fpsToDuration(fps int) time.Duration {
+	nanos := int(time.Second.Nanoseconds()) / fps
+	return time.Nanosecond * time.Duration(nanos)
 }
