@@ -1,4 +1,6 @@
-package game
+package conwaylogic
+
+import "gcoletta.it/game-of-life/internal/game"
 
 type coord struct {
 	row, col int
@@ -12,13 +14,13 @@ type coord struct {
 	- Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 */
 
-func Iterate(old Matrix) Matrix {
-	new := NewMatrix(len(old), len(old[0]))
+func Iterate(old game.Matrix) game.Matrix {
+	new := game.NewMatrix(len(old), len(old[0]))
 	iterateGrid(old, new)
 	return new
 }
 
-func iterateGrid(oldGrid Matrix, newGrid Matrix) {
+func iterateGrid(oldGrid game.Matrix, newGrid game.Matrix) {
 	for row := range oldGrid {
 		for col := range oldGrid[row] {
 			newGrid[row][col] = iterateCell(oldGrid, row, col)
@@ -26,7 +28,7 @@ func iterateGrid(oldGrid Matrix, newGrid Matrix) {
 	}
 }
 
-func iterateCell(g Matrix, row, col int) bool {
+func iterateCell(g game.Matrix, row, col int) bool {
 	aliveNeighbours := countActiveNeighbours(g, row, col)
 	wasAlive := g[row][col]
 	return remainsAlive(wasAlive, aliveNeighbours) || comesAlive(wasAlive, aliveNeighbours)
@@ -40,7 +42,7 @@ func comesAlive(currentAlive bool, aliveNeighbours int) bool {
 	return !currentAlive && aliveNeighbours == 3
 }
 
-func countActiveNeighbours(g Matrix, row, col int) int {
+func countActiveNeighbours(g game.Matrix, row, col int) int {
 	count := 0
 	for _, c := range neighbourCells(row, col) {
 		if coordExists(g, c) {
@@ -66,14 +68,14 @@ func neighbourCells(row, col int) [8]coord {
 	}
 }
 
-func coordExists(g Matrix, c coord) bool {
+func coordExists(g game.Matrix, c coord) bool {
 	return rowExists(g, c.row) && colExists(g, c.col)
 }
 
-func rowExists(g Matrix, row int) bool {
+func rowExists(g game.Matrix, row int) bool {
 	return row >= 0 && row < len(g)
 }
 
-func colExists(g Matrix, col int) bool {
+func colExists(g game.Matrix, col int) bool {
 	return col >= 0 && col < len(g[0])
 }

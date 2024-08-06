@@ -26,6 +26,8 @@ type UICallback interface {
 	Next()
 }
 
+type GameLogic func (Matrix) Matrix
+
 type Game interface {
 	UICallback
 	Start() error
@@ -38,6 +40,7 @@ type Options struct {
 
 type GameImpl struct {
 	ui            UserInterface
+	logic         GameLogic
 	history       History
 	fps           int
 	currentlyPlay bool
@@ -46,7 +49,7 @@ type GameImpl struct {
 	quitChan      chan struct{}
 }
 
-func New(ui UserInterface, opts Options) *GameImpl {
+func New(ui UserInterface, logic GameLogic, opts Options) *GameImpl {
 
 	history := History{timeline: make([]Matrix, 0, 100)}
 
@@ -62,6 +65,7 @@ func New(ui UserInterface, opts Options) *GameImpl {
 
 	game := GameImpl{
 		ui:         ui,
+		logic:      logic,
 		fps:        fps,
 		history:    history,
 		updateChan: make(chan MatrixUpdater),
@@ -143,7 +147,7 @@ func (game *GameImpl) forward() {
 	if matrix != nil {
 		game.ui.UpdateMatrix(matrix)
 	} else {
-		game.UpdateMatrix(Iterate)
+		game.UpdateMatrix(MatrixUpdater(game.logic))
 	}
 }
 
