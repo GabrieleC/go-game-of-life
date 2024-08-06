@@ -3,7 +3,8 @@ package grid
 type Matrix [][]byte
 
 const (
-	Alive = iota
+	Dead = iota
+	Alive
 	Shadow
 )
 
