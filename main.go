@@ -8,7 +8,7 @@ import (
 
 func main() {
 
-	ui := d2dui.New()
+	ui := d2dui.New(800, 800)
 
 	matrix := game.NewMatrix(60, 60)
 	patterns.Glider(matrix, 1, 1)

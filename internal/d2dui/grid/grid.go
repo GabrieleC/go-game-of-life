@@ -4,14 +4,15 @@ import (
 	"image/color"
 
 	"gcoletta.it/game-of-life/internal/d2dui/area"
-	"gcoletta.it/game-of-life/internal/game"
 	"github.com/llgcode/draw2d/draw2dgl"
 	"github.com/llgcode/draw2d/draw2dkit"
 )
 
 var gridColor = color.RGBA{0, 0, 0, 0x55}
+var aliveCellColor = color.RGBA{0, 0, 0, 0xff}
+var shadowCellColor = color.RGBA{0, 0, 0, 0x33}
 
-func Draw(gc *draw2dgl.GraphicContext, matrix game.Matrix, canvas area.Area) {
+func Draw(gc *draw2dgl.GraphicContext, matrix Matrix, canvas area.Area) {
 	if matrix != nil {
 		width, height := calculateGridDimensions(matrix, canvas.Width, canvas.Height)
 		gridCanvas := area.Area{Width: width, Height: height}
@@ -21,24 +22,22 @@ func Draw(gc *draw2dgl.GraphicContext, matrix game.Matrix, canvas area.Area) {
 	}
 }
 
-func drawGrid(gc *draw2dgl.GraphicContext, matrix game.Matrix, canvas area.Area) {
-	rows, cols := matrix.Rows(), matrix.Cols()
+func drawGrid(gc *draw2dgl.GraphicContext, matrix Matrix, canvas area.Area) {
+	rows, cols := dimension(matrix)
 
 	cellWidth := canvas.Width / cols
 	cellHeight := canvas.Height / rows
 
 	gc.SetStrokeColor(gridColor)
 
-	x := 0
-	for count := 0; count <= rows; count++ {
+	for x, count := 0, 0; count <= rows; count++ {
 		gc.MoveTo(float64(x), 0)
 		gc.LineTo(float64(x), float64(rows*cellHeight))
 		gc.Stroke()
 		x += cellWidth
 	}
 
-	y := 0
-	for count := 0; count <= cols; count++ {
+	for y, count := 0, 0; count <= cols; count++ {
 		gc.MoveTo(0, float64(y))
 		gc.LineTo(float64(cols*cellWidth), float64(y))
 		gc.Stroke()
@@ -46,21 +45,24 @@ func drawGrid(gc *draw2dgl.GraphicContext, matrix game.Matrix, canvas area.Area)
 	}
 }
 
-func drawAliveCells(gc *draw2dgl.GraphicContext, matrix game.Matrix, canvas area.Area) {
-	maxRow, maxCol := matrix.Rows(), matrix.Cols()
+func drawAliveCells(gc *draw2dgl.GraphicContext, matrix Matrix, canvas area.Area) {
+	maxRow, maxCol := dimension(matrix)
 
 	for row := 0; row < maxRow; row++ {
 		for col := 0; col < maxCol; col++ {
 			matrixRow, matrixCol := row, col
-			if matrix[matrixRow][matrixCol] {
-				drawAliveCell(gc, matrix, canvas, row, col)
+			switch matrix[matrixRow][matrixCol] {
+			case Alive:
+				drawCell(gc, matrix, canvas, row, col, aliveCellColor)
+			case Shadow:
+				drawCell(gc, matrix, canvas, row, col, shadowCellColor)
 			}
 		}
 	}
 }
 
-func drawAliveCell(gc *draw2dgl.GraphicContext, matrix game.Matrix, canvas area.Area, row, col int) {
-	rows, cols := matrix.Rows(), matrix.Cols()
+func drawCell(gc *draw2dgl.GraphicContext, matrix Matrix, canvas area.Area, row, col int, color color.Color) {
+	rows, cols := dimension(matrix)
 
 	cellWidth := canvas.Width / cols
 	cellHeight := canvas.Height / rows
@@ -70,12 +72,12 @@ func drawAliveCell(gc *draw2dgl.GraphicContext, matrix game.Matrix, canvas area.
 
 	gc.BeginPath()
 	draw2dkit.Rectangle(gc, float64(x), float64(y), float64(x+cellWidth), float64(y+cellHeight))
-	gc.SetFillColor(color.RGBA{0, 0, 0, 0xff})
+	gc.SetFillColor(color)
 	gc.Fill()
 }
 
-func calculateGridDimensions(matrix game.Matrix, canvasWidth, canvasHeight int) (int, int) {
-	rows, cols := matrix.Rows(), matrix.Cols()
+func calculateGridDimensions(matrix Matrix, canvasWidth, canvasHeight int) (int, int) {
+	rows, cols := dimension(matrix)
 	var width, height int
 
 	tallerThanWiderComparision := area.IsTallerThanWider(

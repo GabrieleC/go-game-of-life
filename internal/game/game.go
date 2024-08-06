@@ -11,12 +11,11 @@ type MatrixUpdater func(old Matrix) Matrix
 type UserInterface interface {
 	Start() error
 	Stop()
-	SetGame(callback Game)
+	SetCallback(callback UICallback)
 	UpdateMatrix(matrix Matrix)
 }
 
-type Game interface {
-	Start() error
+type UICallback interface {
 	Quit()
 	Play()
 	Pause()
@@ -25,6 +24,11 @@ type Game interface {
 	SpeedDown()
 	Back()
 	Next()
+}
+
+type Game interface {
+	UICallback
+	Start() error
 }
 
 type Options struct {
@@ -64,7 +68,7 @@ func New(ui UserInterface, opts Options) *GameImpl {
 		quitChan:   make(chan struct{}),
 	}
 
-	ui.SetGame(&game)
+	ui.SetCallback(&game)
 	go game.listenUpdates()
 	game.forwardJob = periodicjob.New(fpsToDuration(fps), game.periodicForward)
 

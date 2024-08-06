@@ -17,21 +17,19 @@ func init() {
 }
 
 type D2dui struct {
-	game                game.Game
-	matrix              game.Matrix
-	redraw              bool
-	winWidth, winHeight int
-	stopRequested       bool
-	mtxwin              matrixwin.Matrixwin
+	callback      game.UICallback
+	matrix        game.Matrix
+	matrixwin     matrixwin.Matrixwin
+	redraw        bool
+	width, height int
+	stopRequested bool
 }
 
-func New() *D2dui {
-	width := 800
-	height := 800
+func New(width, height int) *D2dui {
 	return &D2dui{
-		redraw:    true,
-		winWidth:  width,
-		winHeight: height,
+		redraw: true,
+		width:  width,
+		height: height,
 	}
 }
 
@@ -41,7 +39,7 @@ func (ui *D2dui) Start() error {
 		return err
 	}
 
-	window, err := glfw.CreateWindow(ui.winWidth, ui.winHeight, "Show RoundedRect", nil, nil)
+	window, err := glfw.CreateWindow(ui.width, ui.height, "Show RoundedRect", nil, nil)
 	if err != nil {
 		return err
 	}
@@ -57,7 +55,7 @@ func (ui *D2dui) Start() error {
 		return err
 	}
 
-	ui.reshape(window, ui.winWidth, ui.winHeight)
+	ui.reshape(window, ui.width, ui.height)
 
 	for !ui.stopRequested {
 		if ui.redraw {
@@ -76,13 +74,13 @@ func (ui *D2dui) Stop() {
 	glfw.Terminate()
 }
 
-func (ui *D2dui) SetGame(game game.Game) {
-	ui.game = game
+func (ui *D2dui) SetCallback(callback game.UICallback) {
+	ui.callback = callback
 }
 
 func (ui *D2dui) UpdateMatrix(matrix game.Matrix) {
 	ui.matrix = matrix
-	ui.mtxwin.Update(matrix.Rows(), matrix.Cols())
+	ui.matrixwin.Update(matrix.Rows(), matrix.Cols())
 	ui.invalidate()
 }
 
@@ -92,19 +90,33 @@ func (ui *D2dui) invalidate() {
 
 func (ui *D2dui) display() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	gc := draw2dgl.NewGraphicContext(ui.winWidth, ui.winHeight)
-	gridArea := area.Area{Width: ui.winWidth, Height: ui.winHeight}
+	gc := draw2dgl.NewGraphicContext(ui.width, ui.height)
+	gridArea := area.Area{Width: ui.width, Height: ui.height}
 	mtx := ui.createGridMatrix()
 	grid.Draw(gc, mtx, gridArea)
 	gl.Flush()
 }
 
-func (ui *D2dui) createGridMatrix() game.Matrix {
-	rows, cols := ui.mtxwin.Dimensions()
-	originRow, originCol := ui.mtxwin.Origin()
+func (ui *D2dui) createGridMatrix() grid.Matrix {
+	rows, cols := ui.matrixwin.Dimensions()
+	originRow, originCol := ui.matrixwin.Origin()
 
-	mtx := game.NewMatrix(rows, cols)
-	mtx.Copy(ui.matrix, originRow, originCol)
+	// crea matrice nuova
+	mtx := make([][]byte, rows)
+	for rowId := range ui.matrix {
+		mtx[rowId] = make([]byte, cols)
+	}
+
+	// TODO: popola matrice con celle ombra
+
+	// popola matrice con celle vive
+	for rowId, row := range ui.matrix {
+		for colId := range row {
+			if ui.matrix[rowId][colId] {
+				mtx[rowId+originRow][colId+originCol] = grid.Alive
+			}
+		}
+	}
 
 	return mtx
 }
@@ -126,7 +138,7 @@ func (ui *D2dui) reshape(window *glfw.Window, w, h int) {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Disable(gl.DEPTH_TEST)
-	ui.winWidth, ui.winHeight = w, h
+	ui.width, ui.height = w, h
 	ui.invalidate()
 }
 
@@ -134,39 +146,39 @@ func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.A
 	if action == glfw.Press {
 		switch {
 		case (key == glfw.KeyEscape || key == glfw.KeyQ):
-			ui.game.Quit()
+			ui.callback.Quit()
 		case key == glfw.KeySpace:
-			ui.game.TogglePlayPause()
+			ui.callback.TogglePlayPause()
 		}
 	}
 
 	if action == glfw.Press || action == glfw.Repeat {
 		switch {
 		case key == glfw.KeyRight:
-			ui.mtxwin.HorizontalPan(1)
+			ui.matrixwin.HorizontalPan(1)
 			ui.invalidate()
 		case key == glfw.KeyLeft:
-			ui.mtxwin.HorizontalPan(-1)
+			ui.matrixwin.HorizontalPan(-1)
 			ui.invalidate()
 		case key == glfw.KeyUp:
-			ui.mtxwin.VerticalPan(-1)
+			ui.matrixwin.VerticalPan(-1)
 			ui.invalidate()
 		case key == glfw.KeyDown:
-			ui.mtxwin.VerticalPan(1)
+			ui.matrixwin.VerticalPan(1)
 			ui.invalidate()
 		case key == glfw.KeyN:
-			ui.game.SpeedDown()
+			ui.callback.SpeedDown()
 		case key == glfw.KeyM:
-			ui.game.SpeedUp()
+			ui.callback.SpeedUp()
 		case key == glfw.KeyK:
-			ui.game.Back()
+			ui.callback.Back()
 		case key == glfw.KeyL:
-			ui.game.Next()
+			ui.callback.Next()
 		case key == glfw.KeyO:
-			ui.mtxwin.ZoomIn()
+			ui.matrixwin.ZoomIn()
 			ui.invalidate()
 		case key == glfw.KeyP:
-			ui.mtxwin.ZoomOut()
+			ui.matrixwin.ZoomOut()
 			ui.invalidate()
 		}
 	}
