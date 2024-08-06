@@ -2,6 +2,7 @@ package grid
 
 import (
 	"image/color"
+	"math"
 
 	"gcoletta.it/game-of-life/internal/d2dui/area"
 	"github.com/llgcode/draw2d/draw2dgl"
@@ -11,6 +12,13 @@ import (
 var gridColor = color.RGBA{0, 0, 0, 0x55}
 var aliveCellColor = color.RGBA{0, 0, 0, 0xff}
 var shadowCellColor = color.RGBA{0, 0, 0, 0x33}
+
+func CanvasCoords(x, y float64, canvas area.Area, rows, cols int) (row, col int) {
+	cellWidth, cellHeight := cellSize(canvas, rows, cols)
+	row = int(math.Ceil(y / float64(cellHeight)))
+	col = int(math.Ceil(x / float64(cellWidth)))
+	return row, col
+}
 
 func Draw(gc *draw2dgl.GraphicContext, matrix Matrix, canvas area.Area) {
 	if matrix != nil {
@@ -61,8 +69,13 @@ func drawAliveCells(gc *draw2dgl.GraphicContext, matrix Matrix, canvas area.Area
 	}
 }
 
+func cellSize(canvas area.Area, rows, cols int) (width, height int) {
+	return (canvas.Width / cols), (canvas.Height / rows)
+}
+
 func drawCell(gc *draw2dgl.GraphicContext, matrix Matrix, canvas area.Area, row, col int, color color.Color) {
 	rows, cols := dimension(matrix)
+//	cellWidth, cellHeight := cellSize(canvas, rows, cols)
 
 	cellWidth := canvas.Width / cols
 	cellHeight := canvas.Height / rows

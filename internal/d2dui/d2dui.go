@@ -23,6 +23,7 @@ type D2dui struct {
 	redraw        bool
 	width, height int
 	stopRequested bool
+	curX, curY    float64
 }
 
 func New(width, height int) *D2dui {
@@ -47,6 +48,7 @@ func (ui *D2dui) Start() error {
 	window.MakeContextCurrent()
 	window.SetSizeCallback(ui.reshape)
 	window.SetKeyCallback(ui.onKey)
+	window.SetCursorPosCallback(ui.onCursorPos)
 
 	glfw.SwapInterval(1)
 
@@ -99,7 +101,6 @@ func (ui *D2dui) display() {
 
 func (ui *D2dui) createGridMatrix() grid.Matrix {
 	rows, cols := ui.matrixwin.Dimensions()
-	originRow, originCol := ui.matrixwin.Origin()
 
 	// crea matrice nuova
 	mtx := make([][]byte, rows)
@@ -107,9 +108,13 @@ func (ui *D2dui) createGridMatrix() grid.Matrix {
 		mtx[rowId] = make([]byte, cols)
 	}
 
-	// TODO: popola matrice con celle ombra
+	// popola celle ombra
+	// gridArea := area.Area{Width: ui.width, Height: ui.height}
+	// curRow, curCol := grid.CanvasCoords(ui.curX, ui.curY, gridArea, rows, cols)
+	// mtx[curRow][curCol] = grid.Shadow
 
 	// popola matrice con celle vive
+	originRow, originCol := ui.matrixwin.Origin()
 	for rowId, row := range ui.matrix {
 		for colId := range row {
 			if ui.matrix[rowId][colId] {
@@ -182,4 +187,9 @@ func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.A
 			ui.invalidate()
 		}
 	}
+}
+
+func (ui *D2dui) onCursorPos(w *glfw.Window, xpos float64, ypos float64) {
+	ui.curX = xpos
+	ui.curY = ypos
 }
