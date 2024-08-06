@@ -1,9 +1,9 @@
 package matrixwin
 
 type Matrixwin struct {
-	originX, originY int
-	cols, rows       int
-	maxCols, maxRows int
+	originCol, originRow int
+	cols, rows           int
+	maxCols, maxRows     int
 }
 
 func (w *Matrixwin) Update(rows, cols int) {
@@ -23,8 +23,12 @@ func (w *Matrixwin) Dimensions() (int, int) {
 	return w.rows, w.cols
 }
 
+func (w *Matrixwin) Origin() (int, int) {
+	return w.originRow, w.originCol
+}
+
 func (w *Matrixwin) Coords(winY, winX int) (y, x int) {
-	return winY + w.originY, winX + w.originX
+	return winY + w.originRow, winX + w.originCol
 }
 
 func (w *Matrixwin) ZoomIn() {
@@ -42,15 +46,15 @@ func (w *Matrixwin) ZoomOut() {
 }
 
 func (w *Matrixwin) HorizontalPan(steps int) {
-	x := w.originX + steps
+	x := w.originCol + steps
 	if x+w.cols <= w.maxCols && x >= 0 {
-		w.originX = x
+		w.originCol = x
 	}
 }
 
 func (w *Matrixwin) VerticalPan(steps int) {
-	y := w.originY + steps
+	y := w.originRow + steps
 	if y+w.rows <= w.maxRows && y >= 0 {
-		w.originY = y
+		w.originRow = y
 	}
 }

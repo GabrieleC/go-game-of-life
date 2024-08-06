@@ -5,6 +5,7 @@ import (
 
 	"gcoletta.it/game-of-life/internal/d2dui/area"
 	"gcoletta.it/game-of-life/internal/d2dui/grid"
+	"gcoletta.it/game-of-life/internal/d2dui/matrixwin"
 	"gcoletta.it/game-of-life/internal/game"
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
@@ -18,10 +19,10 @@ func init() {
 type D2dui struct {
 	game                game.Game
 	matrix              game.Matrix
-	grid                grid.Grid
 	redraw              bool
 	winWidth, winHeight int
 	stopRequested       bool
+	mtxwin              matrixwin.Matrixwin
 }
 
 func New() *D2dui {
@@ -31,7 +32,6 @@ func New() *D2dui {
 		redraw:    true,
 		winWidth:  width,
 		winHeight: height,
-		grid:      grid.New(),
 	}
 }
 
@@ -82,7 +82,7 @@ func (ui *D2dui) SetGame(game game.Game) {
 
 func (ui *D2dui) UpdateMatrix(matrix game.Matrix) {
 	ui.matrix = matrix
-	ui.grid.UpdateMatrix(ui.matrix)
+	ui.mtxwin.Update(matrix.Rows(), matrix.Cols())
 	ui.invalidate()
 }
 
@@ -94,9 +94,19 @@ func (ui *D2dui) display() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	gc := draw2dgl.NewGraphicContext(ui.winWidth, ui.winHeight)
 	gridArea := area.Area{Width: ui.winWidth, Height: ui.winHeight}
-	gridOrigin := grid.Coord{X: 0, Y: 0}
-	ui.grid.Draw(gc, gridOrigin, gridArea)
+	mtx := ui.createGridMatrix()
+	grid.Draw(gc, mtx, gridArea)
 	gl.Flush()
+}
+
+func (ui *D2dui) createGridMatrix() game.Matrix {
+	rows, cols := ui.mtxwin.Dimensions()
+	originRow, originCol := ui.mtxwin.Origin()
+
+	mtx := game.NewMatrix(rows, cols)
+	mtx.Copy(ui.matrix, originRow, originCol)
+
+	return mtx
 }
 
 func (ui *D2dui) reshape(window *glfw.Window, w, h int) {
@@ -133,16 +143,16 @@ func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.A
 	if action == glfw.Press || action == glfw.Repeat {
 		switch {
 		case key == glfw.KeyRight:
-			ui.grid.HorizontalPan(1)
+			ui.mtxwin.HorizontalPan(1)
 			ui.invalidate()
 		case key == glfw.KeyLeft:
-			ui.grid.HorizontalPan(-1)
+			ui.mtxwin.HorizontalPan(-1)
 			ui.invalidate()
 		case key == glfw.KeyUp:
-			ui.grid.VerticalPan(-1)
+			ui.mtxwin.VerticalPan(-1)
 			ui.invalidate()
 		case key == glfw.KeyDown:
-			ui.grid.VerticalPan(1)
+			ui.mtxwin.VerticalPan(1)
 			ui.invalidate()
 		case key == glfw.KeyN:
 			ui.game.SpeedDown()
@@ -153,10 +163,10 @@ func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.A
 		case key == glfw.KeyL:
 			ui.game.Next()
 		case key == glfw.KeyO:
-			ui.grid.ZoomIn()
+			ui.mtxwin.ZoomIn()
 			ui.invalidate()
 		case key == glfw.KeyP:
-			ui.grid.ZoomOut()
+			ui.mtxwin.ZoomOut()
 			ui.invalidate()
 		}
 	}
