@@ -13,16 +13,26 @@ var gridColor = color.RGBA{0, 0, 0, 0x55}
 var aliveCellColor = color.RGBA{0, 0, 0, 0xff}
 var shadowCellColor = color.RGBA{0, 0, 0, 0x33}
 
-func CanvasCoords(x, y float64, canvas area.Area, rows, cols int) (row, col int) {
+func CanvasCoords(x, y float64, canvas area.Area, rows, cols int) (row, col int, ok bool) {
 	cellWidth, cellHeight := cellSize(canvas, rows, cols)
-	row = int(math.Ceil(y / float64(cellHeight)))
-	col = int(math.Ceil(x / float64(cellWidth)))
-	return row, col
+
+	gridWidth := cellWidth * cols
+	gridHeight := cellHeight * rows
+
+	if x >= float64(gridWidth) || y >= float64(gridHeight) {
+		return 0, 0, false
+	}
+
+	row = int(math.Floor(y / float64(cellHeight)))
+	col = int(math.Floor(x / float64(cellWidth)))
+
+	return row, col, true
 }
 
 func Draw(gc *draw2dgl.GraphicContext, matrix Matrix, canvas area.Area) {
 	if matrix != nil {
-		width, height := calculateGridDimensions(matrix, canvas.Width, canvas.Height)
+		rows, cols := dimension(matrix)
+		width, height := calculateGridDimensions(rows, cols, canvas.Width, canvas.Height)
 		gridCanvas := area.Area{Width: width, Height: height}
 
 		drawGrid(gc, matrix, gridCanvas)
@@ -75,7 +85,7 @@ func cellSize(canvas area.Area, rows, cols int) (width, height int) {
 
 func drawCell(gc *draw2dgl.GraphicContext, matrix Matrix, canvas area.Area, row, col int, color color.Color) {
 	rows, cols := dimension(matrix)
-//	cellWidth, cellHeight := cellSize(canvas, rows, cols)
+	//	cellWidth, cellHeight := cellSize(canvas, rows, cols)
 
 	cellWidth := canvas.Width / cols
 	cellHeight := canvas.Height / rows
@@ -89,8 +99,7 @@ func drawCell(gc *draw2dgl.GraphicContext, matrix Matrix, canvas area.Area, row,
 	gc.Fill()
 }
 
-func calculateGridDimensions(matrix Matrix, canvasWidth, canvasHeight int) (int, int) {
-	rows, cols := dimension(matrix)
+func calculateGridDimensions(rows, cols int, canvasWidth, canvasHeight int) (int, int) {
 	var width, height int
 
 	tallerThanWiderComparision := area.IsTallerThanWider(

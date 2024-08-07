@@ -40,7 +40,7 @@ func (ui *D2dui) Start() error {
 		return err
 	}
 
-	window, err := glfw.CreateWindow(ui.width, ui.height, "Show RoundedRect", nil, nil)
+	window, err := glfw.CreateWindow(ui.width, ui.height, "Go Game Of Life", nil, nil)
 	if err != nil {
 		return err
 	}
@@ -49,6 +49,7 @@ func (ui *D2dui) Start() error {
 	window.SetSizeCallback(ui.reshape)
 	window.SetKeyCallback(ui.onKey)
 	window.SetCursorPosCallback(ui.onCursorPos)
+	window.SetScrollCallback(ui.onScroll)
 
 	glfw.SwapInterval(1)
 
@@ -81,8 +82,10 @@ func (ui *D2dui) SetCallback(callback game.UICallback) {
 }
 
 func (ui *D2dui) UpdateMatrix(matrix game.Matrix) {
+	if ui.matrix == nil {
+		ui.matrixwin.Update(matrix.Rows(), matrix.Cols())
+	}
 	ui.matrix = matrix
-	ui.matrixwin.Update(matrix.Rows(), matrix.Cols())
 	ui.invalidate()
 }
 
@@ -97,33 +100,6 @@ func (ui *D2dui) display() {
 	mtx := ui.createGridMatrix()
 	grid.Draw(gc, mtx, gridArea)
 	gl.Flush()
-}
-
-func (ui *D2dui) createGridMatrix() grid.Matrix {
-	rows, cols := ui.matrixwin.Dimensions()
-
-	// crea matrice nuova
-	mtx := make([][]byte, rows)
-	for rowId := range ui.matrix {
-		mtx[rowId] = make([]byte, cols)
-	}
-
-	// popola celle ombra
-	// gridArea := area.Area{Width: ui.width, Height: ui.height}
-	// curRow, curCol := grid.CanvasCoords(ui.curX, ui.curY, gridArea, rows, cols)
-	// mtx[curRow][curCol] = grid.Shadow
-
-	// popola matrice con celle vive
-	originRow, originCol := ui.matrixwin.Origin()
-	for rowId, row := range ui.matrix {
-		for colId := range row {
-			if ui.matrix[rowId][colId] {
-				mtx[rowId+originRow][colId+originCol] = grid.Alive
-			}
-		}
-	}
-
-	return mtx
 }
 
 func (ui *D2dui) reshape(window *glfw.Window, w, h int) {
@@ -192,4 +168,15 @@ func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.A
 func (ui *D2dui) onCursorPos(w *glfw.Window, xpos float64, ypos float64) {
 	ui.curX = xpos
 	ui.curY = ypos
+	ui.invalidate()
+}
+
+func (ui *D2dui) onScroll(w *glfw.Window, xoff float64, yoff float64) {
+	if yoff > 0 {
+		ui.matrixwin.ZoomIn()
+		ui.invalidate()
+	} else if yoff < 0 {
+		ui.matrixwin.ZoomOut()
+		ui.invalidate()
+	}
 }

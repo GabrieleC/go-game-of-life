@@ -42,6 +42,13 @@ func (w *Matrixwin) ZoomOut() {
 	if w.cols < w.maxCols && w.rows < w.maxRows {
 		w.cols++
 		w.rows++
+
+		if w.cols > w.maxCols - w.originCol {
+			w.originCol--
+		}
+		if w.rows > w.maxRows - w.originRow {
+			w.originRow--
+		}
 	}
 }
 
