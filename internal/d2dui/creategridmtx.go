@@ -6,7 +6,8 @@ import (
 )
 
 func (ui *D2dui) createGridMatrix() grid.Matrix {
-	rows, cols := ui.matrixwin.Dimensions()
+	cols := ui.matrix.Cols()
+	rows := ui.matrix.Rows()
 	mtx := newGridMatrix(rows, cols)
 	ui.setShadowCells(rows, cols, mtx)
 	ui.setAliveCells(mtx)
@@ -30,10 +31,9 @@ func (ui *D2dui) setShadowCells(rows int, cols int, mtx [][]byte) {
 }
 
 func (ui *D2dui) setAliveCells(mtx [][]byte) {
-	originRow, originCol := ui.matrixwin.Origin()
 	for rowId, row := range mtx {
 		for colId := range row {
-			if ui.matrix[rowId+originRow][colId+originCol] {
+			if ui.matrix[rowId][colId] {
 				mtx[rowId][colId] = grid.Alive
 			}
 		}

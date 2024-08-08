@@ -5,7 +5,6 @@ import (
 
 	"gcoletta.it/game-of-life/internal/d2dui/area"
 	"gcoletta.it/game-of-life/internal/d2dui/grid"
-	"gcoletta.it/game-of-life/internal/d2dui/matrixwin"
 	"gcoletta.it/game-of-life/internal/game"
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
@@ -19,7 +18,6 @@ func init() {
 type D2dui struct {
 	callback      game.UICallback
 	matrix        game.Matrix
-	matrixwin     matrixwin.Matrixwin
 	redraw        bool
 	width, height int
 	stopRequested bool
@@ -49,7 +47,6 @@ func (ui *D2dui) Start() error {
 	window.SetSizeCallback(ui.reshape)
 	window.SetKeyCallback(ui.onKey)
 	window.SetCursorPosCallback(ui.onCursorPos)
-	window.SetScrollCallback(ui.onScroll)
 	window.SetMouseButtonCallback(ui.onMouseButton)
 
 	glfw.SwapInterval(1)
@@ -83,9 +80,6 @@ func (ui *D2dui) SetCallback(callback game.UICallback) {
 }
 
 func (ui *D2dui) UpdateMatrix(matrix game.Matrix) {
-	if ui.matrix == nil {
-		ui.matrixwin.Update(matrix.Rows(), matrix.Cols())
-	}
 	ui.matrix = matrix
 	ui.invalidate()
 }
@@ -127,7 +121,7 @@ func (ui *D2dui) reshape(window *glfw.Window, w, h int) {
 func (ui *D2dui) applyPattern() {
 	ui.callback.Edit(func(matrix game.Matrix) game.Matrix {
 		gridArea := area.Area{Width: ui.width, Height: ui.height}
-		rows, cols := ui.matrixwin.Dimensions()
+		rows, cols := ui.matrix.Rows(), ui.matrix.Cols()
 		row, col, ok := grid.CanvasCoords(ui.curX, ui.curY, gridArea, rows, cols)
 		if ok {
 			matrix[row][col] = !matrix[row][col]
@@ -148,32 +142,14 @@ func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.A
 
 	if action == glfw.Press || action == glfw.Repeat {
 		switch {
-		case key == glfw.KeyRight:
-			ui.matrixwin.HorizontalPan(1)
-			ui.invalidate()
-		case key == glfw.KeyLeft:
-			ui.matrixwin.HorizontalPan(-1)
-			ui.invalidate()
-		case key == glfw.KeyUp:
-			ui.matrixwin.VerticalPan(-1)
-			ui.invalidate()
 		case key == glfw.KeyDown:
-			ui.matrixwin.VerticalPan(1)
-			ui.invalidate()
-		case key == glfw.KeyN:
 			ui.callback.SpeedDown()
-		case key == glfw.KeyM:
+		case key == glfw.KeyUp:
 			ui.callback.SpeedUp()
-		case key == glfw.KeyK:
+		case key == glfw.KeyLeft:
 			ui.callback.Back()
-		case key == glfw.KeyL:
+		case key == glfw.KeyRight:
 			ui.callback.Next()
-		case key == glfw.KeyO:
-			ui.matrixwin.ZoomIn()
-			ui.invalidate()
-		case key == glfw.KeyP:
-			ui.matrixwin.ZoomOut()
-			ui.invalidate()
 		}
 	}
 }
@@ -182,16 +158,6 @@ func (ui *D2dui) onCursorPos(w *glfw.Window, xpos float64, ypos float64) {
 	ui.curX = xpos
 	ui.curY = ypos
 	ui.invalidate()
-}
-
-func (ui *D2dui) onScroll(w *glfw.Window, xoff float64, yoff float64) {
-	if yoff > 0 {
-		ui.matrixwin.ZoomIn()
-		ui.invalidate()
-	} else if yoff < 0 {
-		ui.matrixwin.ZoomOut()
-		ui.invalidate()
-	}
 }
 
 func (ui *D2dui) onMouseButton(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
