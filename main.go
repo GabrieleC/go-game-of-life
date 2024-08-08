@@ -11,7 +11,7 @@ func main() {
 
 	ui := d2dui.New(840, 840)
 
-	matrix := game.NewMatrix(60, 50)
+	matrix := game.NewMatrix(60, 60)
 	patterns.Glider(matrix, 1, 1)
 	patterns.Pulsar(matrix, 24, 24)
 
