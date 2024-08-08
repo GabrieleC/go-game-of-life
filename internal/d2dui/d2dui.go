@@ -6,6 +6,7 @@ import (
 	"gcoletta.it/game-of-life/internal/d2dui/area"
 	"gcoletta.it/game-of-life/internal/d2dui/grid"
 	"gcoletta.it/game-of-life/internal/game"
+	"gcoletta.it/game-of-life/internal/patterns"
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/llgcode/draw2d/draw2dgl"
@@ -15,13 +16,24 @@ func init() {
 	runtime.LockOSThread()
 }
 
+var editorPatterns = [...]game.Matrix{
+	nil, // dot
+	patterns.Block(),
+	patterns.Glider(),
+	patterns.LWSS(),
+	patterns.MWSS(),
+	patterns.HWSS(),
+	patterns.Pulsar(),
+}
+
 type D2dui struct {
-	callback      game.UICallback
-	matrix        game.Matrix
-	redraw        bool
-	width, height int
-	stopRequested bool
-	curX, curY    float64
+	callback         game.UICallback
+	matrix           game.Matrix
+	redraw           bool
+	width, height    int
+	stopRequested    bool
+	curX, curY       float64
+	editorPatternIdx int
 }
 
 func New(width, height int) *D2dui {
@@ -121,13 +133,23 @@ func (ui *D2dui) reshape(window *glfw.Window, w, h int) {
 func (ui *D2dui) applyPattern() {
 	ui.callback.Edit(func(matrix game.Matrix) game.Matrix {
 		gridArea := area.Area{Width: ui.width, Height: ui.height}
-		rows, cols := ui.matrix.Rows(), ui.matrix.Cols()
-		row, col, ok := grid.CanvasCoords(ui.curX, ui.curY, gridArea, rows, cols)
+		row, col, ok := grid.CanvasCoords(ui.curX, ui.curY, gridArea, ui.matrix.Rows(), ui.matrix.Cols())
 		if ok {
-			matrix[row][col] = !matrix[row][col]
+			if ui.editorPatternIdx == 0 {
+				matrix[row][col] = !matrix[row][col]
+			}
+			pattern := editorPatterns[ui.editorPatternIdx]
+			matrix.Copy(pattern, row, col)
 		}
 		return matrix
 	})
+}
+
+func (ui *D2dui) nextEditorPattern() {
+	ui.editorPatternIdx++
+	if ui.editorPatternIdx >= len(editorPatterns) {
+		ui.editorPatternIdx = 0
+	}
 }
 
 func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
@@ -137,6 +159,8 @@ func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.A
 			ui.callback.Quit()
 		case key == glfw.KeySpace:
 			ui.callback.TogglePlayPause()
+		case key == glfw.KeyP:
+			ui.nextEditorPattern()
 		}
 	}
 

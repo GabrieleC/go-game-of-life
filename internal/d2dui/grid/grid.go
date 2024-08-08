@@ -14,10 +14,8 @@ var aliveCellColor = color.RGBA{0, 0, 0, 0xff}
 var shadowCellColor = color.RGBA{0, 0, 0, 0x33}
 
 func CanvasCoords(x, y float64, canvas area.Area, rows, cols int) (row, col int, ok bool) {
-	cellWidth, cellHeight := cellSize(canvas, rows, cols)
-
-	gridWidth := cellWidth * cols
-	gridHeight := cellHeight * rows
+	gridWidth, gridHeight := calculateGridDimensions(rows, cols, canvas.Width, canvas.Height)
+	cellWidth, cellHeight := gridWidth / cols, gridHeight / rows
 
 	if x >= float64(gridWidth) || y >= float64(gridHeight) {
 		return 0, 0, false
@@ -79,13 +77,8 @@ func drawAliveCells(gc *draw2dgl.GraphicContext, matrix Matrix, canvas area.Area
 	}
 }
 
-func cellSize(canvas area.Area, rows, cols int) (width, height int) {
-	return (canvas.Width / cols), (canvas.Height / rows)
-}
-
 func drawCell(gc *draw2dgl.GraphicContext, matrix Matrix, canvas area.Area, row, col int, color color.Color) {
 	rows, cols := dimension(matrix)
-	//	cellWidth, cellHeight := cellSize(canvas, rows, cols)
 
 	cellWidth := canvas.Width / cols
 	cellHeight := canvas.Height / rows

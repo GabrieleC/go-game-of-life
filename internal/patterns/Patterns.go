@@ -15,19 +15,37 @@ var pulsar string
 //go:embed txt/block.txt
 var block string
 
-func writePattern(dest game.Matrix, patternString string, row, col int) {
-	pattern := unmarshal(patternString)
-	dest.Copy(pattern, row, col)
+//go:embed txt/lwss.txt
+var lwss string
+
+//go:embed txt/mwss.txt
+var mwss string
+
+//go:embed txt/hwss.txt
+var hwss string
+
+type Pattern func(mtx game.Matrix, row, col int)
+
+func Glider() game.Matrix {
+	return unmarshal(glider)
 }
 
-func Glider(matrix game.Matrix, row, col int) {
-	writePattern(matrix, glider, row, col)
+func Pulsar() game.Matrix {
+	return unmarshal(pulsar)
 }
 
-func Pulsar(dest game.Matrix, row, col int) {
-	writePattern(dest, pulsar, row, col)
+func Block() game.Matrix {
+	return unmarshal(block)
 }
 
-func Block(dest game.Matrix, row, col int) {
-	writePattern(dest, block, row, col)
+func LWSS() game.Matrix {
+	return unmarshal(lwss)
+}
+
+func MWSS() game.Matrix {
+	return unmarshal(mwss)
+}
+
+func HWSS() game.Matrix {
+	return unmarshal(hwss)
 }
