@@ -24,6 +24,7 @@ type UICallback interface {
 	SpeedDown()
 	Back()
 	Next()
+	Edit(updater MatrixUpdater)
 }
 
 type GameLogic func (Matrix) Matrix
@@ -133,7 +134,11 @@ func (game *GameImpl) Next() {
 	game.forward()
 }
 
-func (game *GameImpl) UpdateMatrix(update MatrixUpdater) {
+func (game *GameImpl) Edit(updater MatrixUpdater) {
+	game.updateMatrix(updater)
+}
+
+func (game *GameImpl) updateMatrix(update MatrixUpdater) {
 	game.updateChan <- update
 }
 
@@ -147,7 +152,7 @@ func (game *GameImpl) forward() {
 	if matrix != nil {
 		game.ui.UpdateMatrix(matrix)
 	} else {
-		game.UpdateMatrix(MatrixUpdater(game.logic))
+		game.updateMatrix(MatrixUpdater(game.logic))
 	}
 }
 

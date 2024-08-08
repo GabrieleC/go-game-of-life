@@ -40,7 +40,7 @@ func (ui *D2dui) Start() error {
 		return err
 	}
 
-	window, err := glfw.CreateWindow(ui.width, ui.height, "Go Game Of Life", nil, nil)
+	window, err := glfw.CreateWindow(ui.width, ui.height, "Go - Game Of Life", nil, nil)
 	if err != nil {
 		return err
 	}
@@ -50,6 +50,7 @@ func (ui *D2dui) Start() error {
 	window.SetKeyCallback(ui.onKey)
 	window.SetCursorPosCallback(ui.onCursorPos)
 	window.SetScrollCallback(ui.onScroll)
+	window.SetMouseButtonCallback(ui.onMouseButton)
 
 	glfw.SwapInterval(1)
 
@@ -123,6 +124,18 @@ func (ui *D2dui) reshape(window *glfw.Window, w, h int) {
 	ui.invalidate()
 }
 
+func (ui *D2dui) applyPattern() {
+	ui.callback.Edit(func(matrix game.Matrix) game.Matrix {
+		gridArea := area.Area{Width: ui.width, Height: ui.height}
+		rows, cols := ui.matrixwin.Dimensions()
+		row, col, ok := grid.CanvasCoords(ui.curX, ui.curY, gridArea, rows, cols)
+		if ok {
+			matrix[row][col] = !matrix[row][col]
+		}
+		return matrix
+	})
+}
+
 func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	if action == glfw.Press {
 		switch {
@@ -178,5 +191,11 @@ func (ui *D2dui) onScroll(w *glfw.Window, xoff float64, yoff float64) {
 	} else if yoff < 0 {
 		ui.matrixwin.ZoomOut()
 		ui.invalidate()
+	}
+}
+
+func (ui *D2dui) onMouseButton(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
+	if button == glfw.MouseButton1 && action == glfw.Release {
+		ui.applyPattern()
 	}
 }
