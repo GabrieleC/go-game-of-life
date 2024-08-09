@@ -46,14 +46,14 @@ func drawGrid(gc *draw2dgl.GraphicContext, matrix Matrix, canvas area.Area) {
 
 	gc.SetStrokeColor(gridColor)
 
-	for x, count := 0, 0; count <= rows; count++ {
+	for x, count := 0, 0; count <= cols; count++ {
 		gc.MoveTo(float64(x), 0)
 		gc.LineTo(float64(x), float64(rows*cellHeight))
 		gc.Stroke()
 		x += cellWidth
 	}
 
-	for y, count := 0, 0; count <= cols; count++ {
+	for y, count := 0, 0; count <= rows; count++ {
 		gc.MoveTo(0, float64(y))
 		gc.LineTo(float64(cols*cellWidth), float64(y))
 		gc.Stroke()

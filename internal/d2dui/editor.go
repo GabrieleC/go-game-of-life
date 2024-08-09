@@ -14,7 +14,6 @@ var editorPatterns = [...]game.Matrix{
 	patterns.HWSS(),
 	patterns.Pulsar(),
 	patterns.Gosper(),
-	patterns.BlockEngine1(),
 }
 
 type editor struct {
