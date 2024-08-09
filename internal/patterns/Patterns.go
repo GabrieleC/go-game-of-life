@@ -24,6 +24,12 @@ var mwss string
 //go:embed txt/hwss.txt
 var hwss string
 
+//go:embed txt/gosper.txt
+var gosper string
+
+//go:embed txt/block_engine_1.txt
+var block_engine_1 string
+
 type Pattern func(mtx game.Matrix, row, col int)
 
 func Glider() game.Matrix {
@@ -48,4 +54,12 @@ func MWSS() game.Matrix {
 
 func HWSS() game.Matrix {
 	return unmarshal(hwss)
+}
+
+func Gosper() game.Matrix {
+	return unmarshal(gosper)
+}
+
+func BlockEngine1() game.Matrix {
+	return unmarshal(block_engine_1)
 }

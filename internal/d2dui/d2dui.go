@@ -60,6 +60,7 @@ func (ui *D2dui) initWindow() (*glfw.Window, error) {
 	window.SetKeyCallback(ui.onKey)
 	window.SetCursorPosCallback(ui.onCursorPos)
 	window.SetMouseButtonCallback(ui.onMouseButton)
+	window.SetCloseCallback(ui.onWindowClose)
 
 	glfw.SwapInterval(1)
 
@@ -141,6 +142,7 @@ func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.A
 			ui.callback.TogglePlayPause()
 		case key == glfw.KeyP:
 			ui.editor.iteratePattern()
+			ui.invalidate()
 		}
 	}
 
@@ -176,4 +178,8 @@ func (ui *D2dui) onLeftClick() {
 	if ok {
 		ui.editor.applyPattern(row, col)
 	}
+}
+
+func (ui *D2dui) onWindowClose(w *glfw.Window) {
+	ui.callback.Quit()
 }

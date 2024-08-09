@@ -9,10 +9,10 @@ import (
 func main() {
 
 	ui := d2dui.New(840, 840)
-	matrix := game.NewMatrix(60, 60)
+	matrix := game.NewMatrix(120, 120)
 	game := game.New(ui, conwaylogic.Iterate,
 		game.Options{
-			Fps:           2,
+			Fps:           4,
 			InitialMatrix: matrix,
 		})
 		
