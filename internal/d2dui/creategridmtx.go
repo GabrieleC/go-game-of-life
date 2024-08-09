@@ -27,7 +27,7 @@ func (ui *D2dui) drawEditorPattern(rows int, cols int, mtx [][]byte) {
 	gridArea := area.Area{Width: ui.width, Height: ui.height}
 	curRow, curCol, ok := grid.CanvasCoords(ui.curX, ui.curY, gridArea, rows, cols)
 	if ok {
-		pattern := editorPatterns[ui.editorPatternIdx]
+		pattern := ui.editor.currentPattern()
 		ui.copyPattern(pattern, curRow, curCol, rows, cols, mtx)
 	}
 }

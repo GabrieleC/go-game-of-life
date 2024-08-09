@@ -6,7 +6,6 @@ import (
 	"gcoletta.it/game-of-life/internal/d2dui/area"
 	"gcoletta.it/game-of-life/internal/d2dui/grid"
 	"gcoletta.it/game-of-life/internal/game"
-	"gcoletta.it/game-of-life/internal/patterns"
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/llgcode/draw2d/draw2dgl"
@@ -16,24 +15,14 @@ func init() {
 	runtime.LockOSThread()
 }
 
-var editorPatterns = [...]game.Matrix{
-	nil, // dot
-	patterns.Block(),
-	patterns.Glider(),
-	patterns.LWSS(),
-	patterns.MWSS(),
-	patterns.HWSS(),
-	patterns.Pulsar(),
-}
-
 type D2dui struct {
-	callback         game.UICallback
-	matrix           game.Matrix
-	redraw           bool
-	width, height    int
-	stopRequested    bool
-	curX, curY       float64
-	editorPatternIdx int
+	callback      game.UICallback
+	matrix        game.Matrix
+	redraw        bool
+	width, height int
+	stopRequested bool
+	curX, curY    float64
+	editor        *editor
 }
 
 func New(width, height int) *D2dui {
@@ -41,6 +30,7 @@ func New(width, height int) *D2dui {
 		redraw: true,
 		width:  width,
 		height: height,
+		editor: &editor{},
 	}
 }
 
@@ -100,6 +90,7 @@ func (ui *D2dui) Stop() {
 
 func (ui *D2dui) SetCallback(callback game.UICallback) {
 	ui.callback = callback
+	ui.editor.callback = callback
 }
 
 func (ui *D2dui) UpdateMatrix(matrix game.Matrix) {
@@ -141,28 +132,6 @@ func (ui *D2dui) reshape(window *glfw.Window, w, h int) {
 	ui.invalidate()
 }
 
-func (ui *D2dui) applyPattern() {
-	ui.callback.Edit(func(matrix game.Matrix) game.Matrix {
-		gridArea := area.Area{Width: ui.width, Height: ui.height}
-		row, col, ok := grid.CanvasCoords(ui.curX, ui.curY, gridArea, ui.matrix.Rows(), ui.matrix.Cols())
-		if ok {
-			if ui.editorPatternIdx == 0 {
-				matrix[row][col] = !matrix[row][col]
-			}
-			pattern := editorPatterns[ui.editorPatternIdx]
-			matrix.Copy(pattern, row, col)
-		}
-		return matrix
-	})
-}
-
-func (ui *D2dui) nextEditorPattern() {
-	ui.editorPatternIdx++
-	if ui.editorPatternIdx >= len(editorPatterns) {
-		ui.editorPatternIdx = 0
-	}
-}
-
 func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	if action == glfw.Press {
 		switch {
@@ -171,7 +140,7 @@ func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.A
 		case key == glfw.KeySpace:
 			ui.callback.TogglePlayPause()
 		case key == glfw.KeyP:
-			ui.nextEditorPattern()
+			ui.editor.iteratePattern()
 		}
 	}
 
@@ -197,6 +166,14 @@ func (ui *D2dui) onCursorPos(w *glfw.Window, xpos float64, ypos float64) {
 
 func (ui *D2dui) onMouseButton(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
 	if button == glfw.MouseButton1 && action == glfw.Release {
-		ui.applyPattern()
+		ui.onLeftClick()
+	}
+}
+
+func (ui *D2dui) onLeftClick() {
+	gridArea := area.Area{Width: ui.width, Height: ui.height}
+	row, col, ok := grid.CanvasCoords(ui.curX, ui.curY, gridArea, ui.matrix.Rows(), ui.matrix.Cols())
+	if ok {
+		ui.editor.applyPattern(row, col)
 	}
 }
