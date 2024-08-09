@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 
@@ -11,7 +12,11 @@ import (
 
 func main() {
 
-	size := parseSizeParameter(60)
+	size, err := parseSizeParameter(60)
+	if err != nil {
+		printUsage()
+		os.Exit(1)
+	}
 
 	ui := d2dui.New(840, 840)
 	matrix := game.NewMatrix(size, size)
@@ -24,12 +29,18 @@ func main() {
 	game.Start()
 }
 
-func parseSizeParameter(def int) int {
+func parseSizeParameter(def int) (int, error) {
 	if len(os.Args) > 1 {
 		parsedArg, err := strconv.Atoi(os.Args[1])
 		if err == nil {
-			return parsedArg
+			return parsedArg, nil
+		} else {
+			return 0, err
 		}
 	}
-	return def
+	return def, nil
+}
+
+func printUsage() {
+	fmt.Println("First parameter must be a positive integer number, defining the game universe size")
 }
