@@ -1,5 +1,4 @@
 package game
-
 type History struct {
 	timeline []Matrix
 	cursor   int

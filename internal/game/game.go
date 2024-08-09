@@ -3,42 +3,17 @@ package game
 import (
 	"time"
 
-	"gcoletta.it/game-of-life/internal/game/periodicjob"
+	"gcoletta.it/game-of-life/internal/periodicjob"
 )
-
-type MatrixUpdater func(old Matrix) Matrix
-
-type UserInterface interface {
-	Start() error
-	Stop()
-	SetCallback(callback UICallback)
-	UpdateMatrix(matrix Matrix)
-}
-
-type UICallback interface {
-	Quit()
-	Play()
-	Pause()
-	TogglePlayPause()
-	SpeedUp()
-	SpeedDown()
-	Back()
-	Next()
-	Edit(updater MatrixUpdater)
-}
-
-type GameLogic func (Matrix) Matrix
 
 type Game interface {
 	UICallback
 	Start() error
 }
-
 type Options struct {
 	Fps           int
 	InitialMatrix Matrix
 }
-
 type GameImpl struct {
 	ui            UserInterface
 	logic         GameLogic
