@@ -14,7 +14,7 @@ type Options struct {
 	Fps           int
 	InitialMatrix Matrix
 }
-type GameImpl struct {
+type Impl struct {
 	ui            UserInterface
 	logic         GameLogic
 	history       History
@@ -25,7 +25,7 @@ type GameImpl struct {
 	quitChan      chan struct{}
 }
 
-func New(ui UserInterface, logic GameLogic, opts Options) *GameImpl {
+func New(ui UserInterface, logic GameLogic, opts Options) *Impl {
 
 	history := History{timeline: make([]Matrix, 0, 100)}
 
@@ -39,7 +39,7 @@ func New(ui UserInterface, logic GameLogic, opts Options) *GameImpl {
 		fps = opts.Fps
 	}
 
-	game := GameImpl{
+	game := Impl{
 		ui:         ui,
 		logic:      logic,
 		fps:        fps,
@@ -55,20 +55,20 @@ func New(ui UserInterface, logic GameLogic, opts Options) *GameImpl {
 	return &game
 }
 
-func (game *GameImpl) Start() error {
+func (game *Impl) Start() error {
 	err := game.ui.Start()
 	return err
 }
 
-func (game *GameImpl) Play() {
+func (game *Impl) Play() {
 	game.currentlyPlay = true
 }
 
-func (game *GameImpl) Pause() {
+func (game *Impl) Pause() {
 	game.currentlyPlay = false
 }
 
-func (game *GameImpl) TogglePlayPause() {
+func (game *Impl) TogglePlayPause() {
 	if game.currentlyPlay {
 		game.Pause()
 	} else {
@@ -76,17 +76,17 @@ func (game *GameImpl) TogglePlayPause() {
 	}
 }
 
-func (game *GameImpl) SpeedUp() {
+func (game *Impl) SpeedUp() {
 	game.updateFps(game.fps + 1)
 }
 
-func (game *GameImpl) SpeedDown() {
+func (game *Impl) SpeedDown() {
 	if game.fps > 1 {
 		game.updateFps(game.fps - 1)
 	}
 }
 
-func (game *GameImpl) Quit() {
+func (game *Impl) Quit() {
 	game.ui.Stop()
 	game.forwardJob.Cancel()
 	if game.quitChan != nil {
@@ -95,7 +95,7 @@ func (game *GameImpl) Quit() {
 	}
 }
 
-func (game *GameImpl) Back() {
+func (game *Impl) Back() {
 	game.Pause()
 
 	matrix := game.history.back()
@@ -104,25 +104,25 @@ func (game *GameImpl) Back() {
 	}
 }
 
-func (game *GameImpl) Next() {
+func (game *Impl) Next() {
 	game.Pause()
 	game.forward()
 }
 
-func (game *GameImpl) Edit(updater MatrixUpdater) {
+func (game *Impl) Edit(updater MatrixUpdater) {
 	game.updateMatrix(updater)
 }
 
-func (game *GameImpl) updateMatrix(update MatrixUpdater) {
+func (game *Impl) updateMatrix(update MatrixUpdater) {
 	game.updateChan <- update
 }
 
-func (game *GameImpl) updateFps(fps int) {
+func (game *Impl) updateFps(fps int) {
 	game.fps = fps
 	game.forwardJob.SetInterval(fpsToDuration(game.fps))
 }
 
-func (game *GameImpl) forward() {
+func (game *Impl) forward() {
 	matrix := game.history.forward()
 	if matrix != nil {
 		game.ui.UpdateMatrix(matrix)
@@ -131,13 +131,13 @@ func (game *GameImpl) forward() {
 	}
 }
 
-func (game *GameImpl) periodicForward() {
+func (game *Impl) periodicForward() {
 	if game.currentlyPlay {
 		game.forward()
 	}
 }
 
-func (game *GameImpl) listenUpdates() {
+func (game *Impl) listenUpdates() {
 	for {
 		select {
 		case update := <-game.updateChan:
@@ -148,7 +148,7 @@ func (game *GameImpl) listenUpdates() {
 	}
 }
 
-func (game *GameImpl) applyUpdate(update MatrixUpdater) {
+func (game *Impl) applyUpdate(update MatrixUpdater) {
 	matrix := update(game.history.peek())
 	game.history.append(matrix)
 	game.history.forward()

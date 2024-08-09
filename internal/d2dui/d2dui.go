@@ -45,14 +45,24 @@ func New(width, height int) *D2dui {
 }
 
 func (ui *D2dui) Start() error {
-	err := glfw.Init()
+	window, err := ui.initWindow()
 	if err != nil {
 		return err
 	}
 
+	ui.loop(window)
+	return nil
+}
+
+func (ui *D2dui) initWindow() (*glfw.Window, error) {
+	err := glfw.Init()
+	if err != nil {
+		return nil, err
+	}
+
 	window, err := glfw.CreateWindow(ui.width, ui.height, "Go - Game Of Life", nil, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	window.MakeContextCurrent()
@@ -65,11 +75,14 @@ func (ui *D2dui) Start() error {
 
 	err = gl.Init()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	ui.reshape(window, ui.width, ui.height)
+	return window, nil
+}
 
+func (ui *D2dui) loop(window *glfw.Window) {
 	for !ui.stopRequested {
 		if ui.redraw {
 			ui.display()
@@ -78,8 +91,6 @@ func (ui *D2dui) Start() error {
 		}
 		glfw.PollEvents()
 	}
-
-	return nil
 }
 
 func (ui *D2dui) Stop() {
