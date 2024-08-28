@@ -1,4 +1,4 @@
-package area
+package geometry
 
 type Area struct {
 	Width, Height int

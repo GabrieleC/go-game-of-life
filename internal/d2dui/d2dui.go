@@ -3,9 +3,9 @@ package d2dui
 import (
 	"runtime"
 
-	"gcoletta.it/game-of-life/internal/d2dui/area"
 	"gcoletta.it/game-of-life/internal/d2dui/grid"
 	"gcoletta.it/game-of-life/internal/game"
+	"gcoletta.it/game-of-life/internal/geometry"
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/llgcode/draw2d/draw2dgl"
@@ -15,9 +15,14 @@ func init() {
 	runtime.LockOSThread()
 }
 
+const panAmount = 5
+const cellMaxSize = 100
+
 type D2dui struct {
 	callback      game.UICallback
 	matrix        game.Matrix
+	origx, origy  int
+	cellSize      int
 	redraw        bool
 	width, height int
 	stopRequested bool
@@ -27,10 +32,11 @@ type D2dui struct {
 
 func New(width, height int) *D2dui {
 	return &D2dui{
-		redraw: true,
-		width:  width,
-		height: height,
-		editor: &editor{},
+		redraw:   true,
+		width:    width,
+		height:   height,
+		cellSize: 30,
+		editor:   &editor{},
 	}
 }
 
@@ -106,9 +112,10 @@ func (ui *D2dui) invalidate() {
 func (ui *D2dui) display() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	gc := draw2dgl.NewGraphicContext(ui.width, ui.height)
-	gridArea := area.Area{Width: ui.width, Height: ui.height}
+	gridArea := geometry.Area{Width: ui.width, Height: ui.height}
 	mtx := ui.createGridMatrix()
-	grid.Draw(gc, mtx, gridArea)
+	origin := geometry.Point{X: ui.origx, Y: ui.origy}
+	grid.Draw(gc, mtx, gridArea, origin, ui.cellSize)
 	gl.Flush()
 }
 
@@ -156,6 +163,26 @@ func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.A
 			ui.callback.Back()
 		case key == glfw.KeyRight:
 			ui.callback.Next()
+		case key == glfw.KeyW:
+			ui.origy = max(ui.origy-panAmount, 0)
+			ui.invalidate()
+		case key == glfw.KeyS:
+			maxy := (ui.cellSize * ui.matrix.Rows()) - ui.height
+			ui.origy = min(ui.origy+panAmount, maxy)
+			ui.invalidate()
+		case key == glfw.KeyA:
+			ui.origx = max(ui.origx-panAmount, 0)
+			ui.invalidate()
+		case key == glfw.KeyD:
+			maxx := (ui.cellSize * ui.matrix.Cols()) - ui.width
+			ui.origx = min(ui.origx+panAmount, maxx)
+			ui.invalidate()
+		case key == glfw.KeyM:
+			ui.cellSize = max(ui.cellSize-1, 3)
+			ui.invalidate()
+		case key == glfw.KeyN:
+			ui.cellSize = min(ui.cellSize+1, cellMaxSize)
+			ui.invalidate()
 		}
 	}
 }
@@ -173,8 +200,9 @@ func (ui *D2dui) onMouseButton(w *glfw.Window, button glfw.MouseButton, action g
 }
 
 func (ui *D2dui) onLeftClick() {
-	gridArea := area.Area{Width: ui.width, Height: ui.height}
-	row, col, ok := grid.CanvasCoords(ui.curX, ui.curY, gridArea, ui.matrix.Rows(), ui.matrix.Cols())
+	gridArea := geometry.Area{Width: ui.width, Height: ui.height}
+	origin := geometry.Point{X: ui.origx, Y: ui.origy}
+	row, col, ok := grid.CanvasCoords(ui.curX, ui.curY, gridArea, ui.matrix.Rows(), ui.matrix.Cols(), origin, ui.cellSize)
 	if ok {
 		ui.editor.applyPattern(row, col)
 	}

@@ -1,9 +1,9 @@
 package d2dui
 
 import (
-	"gcoletta.it/game-of-life/internal/d2dui/area"
 	"gcoletta.it/game-of-life/internal/d2dui/grid"
 	"gcoletta.it/game-of-life/internal/game"
+	"gcoletta.it/game-of-life/internal/geometry"
 )
 
 func (ui *D2dui) createGridMatrix() grid.Matrix {
@@ -24,8 +24,10 @@ func newGridMatrix(rows int, cols int) [][]byte {
 }
 
 func (ui *D2dui) drawEditorPattern(rows int, cols int, mtx [][]byte) {
-	gridArea := area.Area{Width: ui.width, Height: ui.height}
-	curRow, curCol, ok := grid.CanvasCoords(ui.curX, ui.curY, gridArea, rows, cols)
+	gridArea := geometry.Area{Width: ui.width, Height: ui.height}
+	origin := geometry.Point{X: ui.origx, Y: ui.origy}
+
+	curRow, curCol, ok := grid.CanvasCoords(ui.curX, ui.curY, gridArea, ui.matrix.Rows(), ui.matrix.Cols(), origin, ui.cellSize)
 	if ok {
 		pattern := ui.editor.currentPattern()
 		ui.copyPattern(pattern, curRow, curCol, rows, cols, mtx)

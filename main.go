@@ -12,7 +12,7 @@ import (
 
 func main() {
 
-	size, err := parseSizeParameter(60)
+	size, err := parseSizeParameter(500)
 	if err != nil {
 		printUsage()
 		os.Exit(1)
