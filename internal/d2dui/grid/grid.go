@@ -45,25 +45,29 @@ func drawGrid(gc *draw2dgl.GraphicContext, matrix Matrix, canvas geometry.Area, 
 	rows, cols := dimension(matrix)
 	gc.SetStrokeColor(gridColor)
 
-	colcur := origin.X / cellSize
-	rowcur := origin.Y / cellSize
+	firstCol := origin.X / cellSize
+	firstRow := origin.Y / cellSize
 
-	xcursor := cellSize - (origin.X % cellSize)
-	for xcursor <= canvas.Width && colcur <= cols {
-		gc.MoveTo(float64(xcursor), 0)
-		gc.LineTo(float64(xcursor), float64((rows-rowcur)*cellSize))
+	gridHeight := (rows - firstRow) * cellSize
+	xCursor := cellSize - (origin.X % cellSize)
+	colCur := firstCol
+	for xCursor <= canvas.Width && colCur <= cols - 1 {
+		gc.MoveTo(float64(xCursor), 0)
+		gc.LineTo(float64(xCursor), float64(gridHeight))
 		gc.Stroke()
-		colcur++
-		xcursor += cellSize
+		colCur++
+		xCursor += cellSize
 	}
 
-	ycursor := cellSize - (origin.Y % cellSize)
-	for ycursor <= canvas.Height && rowcur <= rows {
-		gc.MoveTo(0, float64(ycursor))
-		gc.LineTo(float64((cols-colcur)*cellSize), float64(ycursor))
+	gridWidth := (cols - firstCol) * cellSize
+	yCursor := cellSize - (origin.Y % cellSize)
+	rowcur := firstRow
+	for yCursor <= canvas.Height && rowcur <= rows - 1 {
+		gc.MoveTo(0, float64(yCursor))
+		gc.LineTo(float64(gridWidth), float64(yCursor))
 		gc.Stroke()
 		rowcur++
-		ycursor += cellSize
+		yCursor += cellSize
 	}
 }
 
@@ -95,25 +99,4 @@ func drawCell(gc *draw2dgl.GraphicContext, color color.Color, cellorigin geometr
 		float64(cellorigin.Y+cellsize))
 	gc.SetFillColor(color)
 	gc.Fill()
-}
-
-func calculateGridDimensions(rows, cols int, canvasWidth, canvasHeight int) (int, int) {
-	var width, height int
-
-	tallerThanWiderComparision := geometry.IsTallerThanWider(
-		geometry.Area{Width: canvasWidth, Height: canvasHeight},
-		geometry.Area{Width: cols, Height: rows},
-	)
-
-	if tallerThanWiderComparision > 0 {
-		matrixRatio := float64(cols) / float64(rows)
-		width = int(float64(canvasHeight) * matrixRatio)
-		height = canvasHeight
-	} else {
-		matrixRatio := float64(rows) / float64(cols)
-		height = int(float64(canvasWidth) * matrixRatio)
-		width = canvasWidth
-	}
-
-	return width, height
 }

@@ -164,18 +164,18 @@ func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.A
 		case key == glfw.KeyRight:
 			ui.callback.Next()
 		case key == glfw.KeyW:
-			ui.origy = max(ui.origy-panAmount, 0)
+			ui.origy = max(ui.origy-ui.cellSize, 0)
 			ui.invalidate()
 		case key == glfw.KeyS:
 			maxy := (ui.cellSize * ui.matrix.Rows()) - ui.height
-			ui.origy = min(ui.origy+panAmount, maxy)
+			ui.origy = min(ui.origy+ui.cellSize, maxy)
 			ui.invalidate()
 		case key == glfw.KeyA:
-			ui.origx = max(ui.origx-panAmount, 0)
+			ui.origx = max(ui.origx-ui.cellSize, 0)
 			ui.invalidate()
 		case key == glfw.KeyD:
 			maxx := (ui.cellSize * ui.matrix.Cols()) - ui.width
-			ui.origx = min(ui.origx+panAmount, maxx)
+			ui.origx = min(ui.origx+ui.cellSize, maxx)
 			ui.invalidate()
 		case key == glfw.KeyM:
 			ui.cellSize = max(ui.cellSize-1, 3)
