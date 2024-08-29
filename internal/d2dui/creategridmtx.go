@@ -3,7 +3,7 @@ package d2dui
 import (
 	"gcoletta.it/game-of-life/internal/d2dui/grid"
 	"gcoletta.it/game-of-life/internal/game"
-	"gcoletta.it/game-of-life/internal/geometry"
+	"gcoletta.it/game-of-life/internal/geom"
 )
 
 func (ui *D2dui) makeGridMatrix() grid.Matrix {
@@ -13,7 +13,7 @@ func (ui *D2dui) makeGridMatrix() grid.Matrix {
 	return mtx
 }
 
-func applyEditorPattern(grd grid.Grid, mtx grid.Matrix, cursor geometry.Point, pattern game.Matrix) {
+func applyEditorPattern(grd grid.Grid, mtx grid.Matrix, cursor geom.Point, pattern game.Matrix) {
 	origin, ok := grd.CanvasCoords(cursor)
 	if ok {
 		grid.ApplyPattern(pattern, origin, mtx, grid.Shadow)

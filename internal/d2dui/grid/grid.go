@@ -3,7 +3,7 @@ package grid
 import (
 	"image/color"
 
-	"gcoletta.it/game-of-life/internal/geometry"
+	"gcoletta.it/game-of-life/internal/geom"
 	"github.com/llgcode/draw2d/draw2dgl"
 )
 
@@ -14,21 +14,21 @@ const cellMaxSize = 100
 
 type Grid struct {
 	Matrix   Matrix
-	Canvas   geometry.Area
-	Origin   geometry.Point
+	Canvas   geom.Area
+	Origin   geom.Point
 	CellSize int
 }
 
-func (grid Grid) CanvasCoords(point geometry.Point) (geometry.Point, bool) {
+func (grid Grid) CanvasCoords(point geom.Point) (geom.Point, bool) {
 	row := (point.Y + grid.Origin.Y) / grid.CellSize
 	col := (point.X + grid.Origin.X) / grid.CellSize
 
 	maxRows, maxCols := Dimension(grid.Matrix)
 	if row > maxRows || col > maxCols {
-		return geometry.Point{}, false
+		return geom.Point{}, false
 	}
 
-	return geometry.Point{X: col, Y: row}, true
+	return geom.Point{X: col, Y: row}, true
 }
 
 func (grid Grid) Draw(gc *draw2dgl.GraphicContext) {
@@ -106,7 +106,7 @@ func drawCells(gc *draw2dgl.GraphicContext, grid Grid) {
 				continue
 			}
 
-			cellOrigin := geometry.Point{
+			cellOrigin := geom.Point{
 				X: (col * grid.CellSize) - grid.Origin.X,
 				Y: (row * grid.CellSize) - grid.Origin.Y,
 			}

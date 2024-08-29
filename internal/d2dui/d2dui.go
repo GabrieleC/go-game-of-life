@@ -5,7 +5,7 @@ import (
 
 	"gcoletta.it/game-of-life/internal/d2dui/grid"
 	"gcoletta.it/game-of-life/internal/game"
-	"gcoletta.it/game-of-life/internal/geometry"
+	"gcoletta.it/game-of-life/internal/geom"
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/llgcode/draw2d/draw2dgl"
@@ -22,16 +22,16 @@ type D2dui struct {
 	redraw        bool
 	stopRequested bool
 	grd           grid.Grid
-	cursor        geometry.Point
+	cursor        geom.Point
 	editor        *editor
 }
 
 func New(width, height int) *D2dui {
 
 	g := grid.Grid{
-		Origin:   geometry.Point{},
+		Origin:   geom.Point{},
 		CellSize: 30,
-		Canvas:   geometry.Area{Width: width, Height: height},
+		Canvas:   geom.Area{Width: width, Height: height},
 	}
 
 	return &D2dui{

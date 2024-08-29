@@ -3,14 +3,14 @@ package grid
 import (
 	"image/color"
 
-	"gcoletta.it/game-of-life/internal/geometry"
+	"gcoletta.it/game-of-life/internal/geom"
 	"github.com/llgcode/draw2d/draw2dgl"
 	"github.com/llgcode/draw2d/draw2dkit"
 )
 
 type cell struct {
 	State  byte
-	Origin geometry.Point
+	Origin geom.Point
 	Size   int
 }
 
