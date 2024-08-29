@@ -23,12 +23,14 @@ func Dimension(matrix Matrix) (rows, cols int) {
 	return rows, cols
 }
 
-func ApplyPattern(pattern game.Matrix, origin geom.Point, mtx Matrix, state byte) {
+type StateUpdater func(currentState byte) byte
+
+func ApplyPattern(pattern game.Matrix, origin geom.Point, mtx Matrix, updater StateUpdater) {
 	rows, cols := Dimension(mtx)
 	for row := 0; row < pattern.Rows() && row+origin.Y < rows; row++ {
 		for col := 0; col < pattern.Cols() && col+origin.X < cols; col++ {
 			if pattern[row][col] {
-				mtx[row+origin.Y][col+origin.X] = Shadow
+				mtx[row+origin.Y][col+origin.X] = updater(mtx[row+origin.Y][col+origin.X])
 			}
 		}
 	}

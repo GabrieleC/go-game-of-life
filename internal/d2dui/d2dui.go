@@ -115,7 +115,8 @@ func (ui *D2dui) invalidate() {
 func (ui *D2dui) display() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	gc := draw2dgl.NewGraphicContext(ui.width, ui.height)
-	ui.grd.Matrix = ui.makeGridMatrix()
+	ui.grd.Matrix = makeGridMatrix(ui.matrix)
+	applyEditorPattern(ui.grd, ui.grd.Matrix, ui.cursor, ui.editor.currentPattern())
 	ui.grd.Draw(gc)
 	gl.Flush()
 }
@@ -207,4 +208,18 @@ func (ui *D2dui) onLeftClick() {
 
 func (ui *D2dui) onWindowClose(w *glfw.Window) {
 	ui.callback.Quit()
+}
+
+func applyEditorPattern(grd grid.Grid, mtx grid.Matrix, cursor geom.Point, pattern game.Matrix) {
+	origin, ok := grd.CanvasCoords(cursor)
+	if ok {
+		grid.ApplyPattern(pattern, origin, mtx, editorStateUpdater)
+	}
+}
+
+func editorStateUpdater(oldState byte) byte {
+	if oldState == grid.Dead {
+		return grid.Shadow
+	}
+	return oldState
 }
