@@ -15,28 +15,31 @@ func init() {
 	runtime.LockOSThread()
 }
 
-const panAmount = 5
-const cellMaxSize = 100
-
 type D2dui struct {
-	callback      game.UICallback
-	matrix        game.Matrix
-	origx, origy  int
-	cellSize      int
-	redraw        bool
 	width, height int
+	matrix        game.Matrix
+	callback      game.UICallback
+	redraw        bool
 	stopRequested bool
-	curX, curY    float64
+	grd           grid.Grid
+	cursor        geometry.Point
 	editor        *editor
 }
 
 func New(width, height int) *D2dui {
+
+	g := grid.Grid{
+		Origin:   geometry.Point{},
+		CellSize: 30,
+		Canvas:   geometry.Area{Width: width, Height: height},
+	}
+
 	return &D2dui{
-		redraw:   true,
-		width:    width,
-		height:   height,
-		cellSize: 30,
-		editor:   &editor{},
+		redraw: true,
+		width:  width,
+		height: height,
+		editor: &editor{},
+		grd:    g,
 	}
 }
 
@@ -112,10 +115,8 @@ func (ui *D2dui) invalidate() {
 func (ui *D2dui) display() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	gc := draw2dgl.NewGraphicContext(ui.width, ui.height)
-	gridArea := geometry.Area{Width: ui.width, Height: ui.height}
-	mtx := ui.createGridMatrix()
-	origin := geometry.Point{X: ui.origx, Y: ui.origy}
-	grid.Draw(gc, mtx, gridArea, origin, ui.cellSize)
+	ui.grd.Matrix = ui.makeGridMatrix()
+	ui.grd.Draw(gc)
 	gl.Flush()
 }
 
@@ -164,32 +165,30 @@ func (ui *D2dui) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.A
 		case key == glfw.KeyRight:
 			ui.callback.Next()
 		case key == glfw.KeyW:
-			ui.origy = max(ui.origy-ui.cellSize, 0)
+			ui.grd.PanUp()
 			ui.invalidate()
 		case key == glfw.KeyS:
-			maxy := (ui.cellSize * ui.matrix.Rows()) - ui.height
-			ui.origy = min(ui.origy+ui.cellSize, maxy)
+			ui.grd.PanDown()
 			ui.invalidate()
 		case key == glfw.KeyA:
-			ui.origx = max(ui.origx-ui.cellSize, 0)
+			ui.grd.PanLeft()
 			ui.invalidate()
 		case key == glfw.KeyD:
-			maxx := (ui.cellSize * ui.matrix.Cols()) - ui.width
-			ui.origx = min(ui.origx+ui.cellSize, maxx)
+			ui.grd.PanRight()
 			ui.invalidate()
 		case key == glfw.KeyM:
-			ui.cellSize = max(ui.cellSize-1, 3)
+			ui.grd.ZoomOut()
 			ui.invalidate()
 		case key == glfw.KeyN:
-			ui.cellSize = min(ui.cellSize+1, cellMaxSize)
+			ui.grd.ZoomIn()
 			ui.invalidate()
 		}
 	}
 }
 
 func (ui *D2dui) onCursorPos(w *glfw.Window, xpos float64, ypos float64) {
-	ui.curX = xpos
-	ui.curY = ypos
+	ui.cursor.X = int(xpos)
+	ui.cursor.Y = int(ypos)
 	ui.invalidate()
 }
 
@@ -200,11 +199,9 @@ func (ui *D2dui) onMouseButton(w *glfw.Window, button glfw.MouseButton, action g
 }
 
 func (ui *D2dui) onLeftClick() {
-	gridArea := geometry.Area{Width: ui.width, Height: ui.height}
-	origin := geometry.Point{X: ui.origx, Y: ui.origy}
-	row, col, ok := grid.CanvasCoords(ui.curX, ui.curY, gridArea, ui.matrix.Rows(), ui.matrix.Cols(), origin, ui.cellSize)
+	cursor, ok := ui.grd.CanvasCoords(ui.cursor)
 	if ok {
-		ui.editor.applyPattern(row, col)
+		ui.editor.applyPattern(cursor.Y, cursor.X)
 	}
 }
 
