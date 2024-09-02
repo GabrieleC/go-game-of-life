@@ -151,6 +151,7 @@ func (ui *D2dui) reshape(window *glfw.Window, w, h int) {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Disable(gl.DEPTH_TEST)
 	ui.width, ui.height = w, h
+	ui.grd.Canvas = geom.Area{Width: w, Height: h}
 	ui.invalidate()
 }
 
