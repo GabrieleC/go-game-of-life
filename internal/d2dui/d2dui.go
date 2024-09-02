@@ -36,6 +36,7 @@ type D2dui struct {
 	grd           grid.Grid
 	cursor        geom.Point
 	editor        *editor
+	gc            *draw2dgl.GraphicContext
 }
 
 func New(width, height int) *D2dui {
@@ -126,10 +127,9 @@ func (ui *D2dui) invalidate() {
 
 func (ui *D2dui) display() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	gc := draw2dgl.NewGraphicContext(ui.width, ui.height)
 	ui.grd.Matrix = grid.Copy(ui.matrix)
 	applyEditorPattern(ui.grd, ui.grd.Matrix, ui.cursor, ui.editor.currentPattern())
-	ui.grd.Draw(gc)
+	ui.grd.Draw(ui.gc)
 	gl.Flush()
 }
 
@@ -151,6 +151,7 @@ func (ui *D2dui) reshape(window *glfw.Window, w, h int) {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Disable(gl.DEPTH_TEST)
 	ui.width, ui.height = w, h
+	ui.gc = draw2dgl.NewGraphicContext(ui.width, ui.height)
 	ui.grd.Canvas = geom.Area{Width: w, Height: h}
 	ui.invalidate()
 }
