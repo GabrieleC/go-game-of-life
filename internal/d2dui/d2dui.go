@@ -11,8 +11,8 @@ import (
 	"github.com/llgcode/draw2d/draw2dgl"
 )
 
-const defaultWinSize = 840
-const defaultTitle = "Go - Game Of Life"
+const defWinSize = 840
+const defTitle = "Go - Game Of Life"
 
 func init() {
 	runtime.LockOSThread()
@@ -31,7 +31,6 @@ type Callbacks interface {
 }
 
 type D2dui struct {
-	width, height int
 	matrix        grid.Matrix
 	callback      Callbacks
 	redraw        bool
@@ -52,8 +51,6 @@ func New(width, height int) *D2dui {
 
 	return &D2dui{
 		redraw: true,
-		width:  width,
-		height: height,
 		editor: &editor{},
 		grd:    g,
 	}
@@ -75,7 +72,7 @@ func (ui *D2dui) initWindow() (*glfw.Window, error) {
 		return nil, err
 	}
 
-	window, err := glfw.CreateWindow(defaultWinSize, defaultWinSize, defaultTitle, nil, nil)
+	window, err := glfw.CreateWindow(defWinSize, defWinSize, defTitle, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +91,7 @@ func (ui *D2dui) initWindow() (*glfw.Window, error) {
 		return nil, err
 	}
 
-	ui.reshape(window, ui.width, ui.height)
+	ui.reshape(window, defWinSize, defWinSize)
 	return window, nil
 }
 
@@ -153,8 +150,7 @@ func (ui *D2dui) reshape(window *glfw.Window, w, h int) {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Disable(gl.DEPTH_TEST)
-	ui.width, ui.height = w, h
-	ui.gc = draw2dgl.NewGraphicContext(ui.width, ui.height)
+	ui.gc = draw2dgl.NewGraphicContext(w, h)
 	ui.grd.Canvas = geom.Area{Width: w, Height: h}
 	ui.invalidate()
 }
