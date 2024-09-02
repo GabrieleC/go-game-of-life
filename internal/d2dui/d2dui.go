@@ -11,6 +11,9 @@ import (
 	"github.com/llgcode/draw2d/draw2dgl"
 )
 
+const defaultWinSize = 840
+const defaultTitle = "Go - Game Of Life"
+
 func init() {
 	runtime.LockOSThread()
 }
@@ -72,7 +75,7 @@ func (ui *D2dui) initWindow() (*glfw.Window, error) {
 		return nil, err
 	}
 
-	window, err := glfw.CreateWindow(ui.width, ui.height, "Go - Game Of Life", nil, nil)
+	window, err := glfw.CreateWindow(defaultWinSize, defaultWinSize, defaultTitle, nil, nil)
 	if err != nil {
 		return nil, err
 	}
