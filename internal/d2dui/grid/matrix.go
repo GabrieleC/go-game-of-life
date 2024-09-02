@@ -23,6 +23,15 @@ func Dimension(matrix Matrix) (rows, cols int) {
 	return rows, cols
 }
 
+func Copy(matrix Matrix) Matrix {
+	duplicate := make([][]byte, len(matrix))
+	for i := range matrix {
+		duplicate[i] = make([]byte, len(matrix[i]))
+		copy(duplicate[i], matrix[i])
+	}
+	return duplicate
+}
+
 type StateUpdater func(currentState byte) byte
 
 func ApplyPattern(pattern game.Matrix, origin geom.Point, mtx Matrix, updater StateUpdater) {

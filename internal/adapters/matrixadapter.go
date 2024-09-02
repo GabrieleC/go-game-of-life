@@ -1,4 +1,4 @@
-package d2dui
+package adapters
 
 import (
 	"gcoletta.it/game-of-life/internal/d2dui/grid"

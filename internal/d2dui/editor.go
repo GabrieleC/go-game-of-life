@@ -18,7 +18,7 @@ var editorPatterns = [...]game.Matrix{
 
 type editor struct {
 	editorPatternIdx int
-	callback         game.UICallback
+	callback         Callbacks
 }
 
 func (e *editor) iteratePattern() {

@@ -15,10 +15,22 @@ func init() {
 	runtime.LockOSThread()
 }
 
+type Callbacks interface {
+	Quit()
+	Play()
+	Pause()
+	TogglePlayPause()
+	SpeedUp()
+	SpeedDown()
+	Back()
+	Next()
+	Edit(updater game.MatrixUpdater) // TODO
+}
+
 type D2dui struct {
 	width, height int
-	matrix        game.Matrix
-	callback      game.UICallback
+	matrix        grid.Matrix
+	callback      Callbacks
 	redraw        bool
 	stopRequested bool
 	grd           grid.Grid
@@ -98,12 +110,12 @@ func (ui *D2dui) Stop() {
 	glfw.Terminate()
 }
 
-func (ui *D2dui) SetCallback(callback game.UICallback) {
+func (ui *D2dui) SetCallback(callback Callbacks) {
 	ui.callback = callback
 	ui.editor.callback = callback
 }
 
-func (ui *D2dui) UpdateMatrix(matrix game.Matrix) {
+func (ui *D2dui) UpdateMatrix(matrix grid.Matrix) {
 	ui.matrix = matrix
 	ui.invalidate()
 }
@@ -115,7 +127,7 @@ func (ui *D2dui) invalidate() {
 func (ui *D2dui) display() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	gc := draw2dgl.NewGraphicContext(ui.width, ui.height)
-	ui.grd.Matrix = makeGridMatrix(ui.matrix)
+	ui.grd.Matrix = grid.Copy(ui.matrix)
 	applyEditorPattern(ui.grd, ui.grd.Matrix, ui.cursor, ui.editor.currentPattern())
 	ui.grd.Draw(gc)
 	gl.Flush()
