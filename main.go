@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"gcoletta.it/game-of-life/internal/adapters"
-	"gcoletta.it/game-of-life/internal/conwaylogic"
 	"gcoletta.it/game-of-life/internal/d2dui"
 	"gcoletta.it/game-of-life/internal/game"
 )
@@ -20,12 +19,12 @@ func main() {
 	}
 
 	ui := adapters.D2duiAdapter(d2dui.New(840, 840))
-	matrix := game.NewMatrix(size, size)
+	mtx := game.NewMatrix(size, size)
 
-	game := game.New(ui, conwaylogic.Iterate,
+	game := game.New(ui, adapters.Iterate,
 		game.Options{
 			Fps:           4,
-			InitialMatrix: matrix,
+			InitialMatrix: mtx,
 		})
 
 	game.Start()
