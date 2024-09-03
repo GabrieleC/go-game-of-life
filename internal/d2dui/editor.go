@@ -1,7 +1,6 @@
 package d2dui
 
 import (
-	"gcoletta.it/game-of-life/internal/game"
 	"gcoletta.it/game-of-life/internal/matrix"
 	"gcoletta.it/game-of-life/internal/patterns"
 )
@@ -30,7 +29,7 @@ func (e *editor) iteratePattern() {
 }
 
 func (e *editor) applyPattern(row, col int) {
-	e.callback.Edit(func(mtx game.Matrix) game.Matrix {
+	e.callback.Edit(func(mtx matrix.Matrix[bool]) matrix.Matrix[bool] {
 		pattern := editorPatterns[e.editorPatternIdx]
 		if pattern == nil {
 			mtx[row][col] = !mtx[row][col]

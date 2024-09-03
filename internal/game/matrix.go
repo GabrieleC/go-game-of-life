@@ -1,6 +1,8 @@
 package game
 
-type Matrix [][]bool
+import "gcoletta.it/game-of-life/internal/matrix"
+
+type Matrix matrix.Matrix[bool]
 
 func NewMatrix(rows, cols int) Matrix {
 	matrix := make([][]bool, rows)

@@ -4,8 +4,8 @@ import (
 	"runtime"
 
 	"gcoletta.it/game-of-life/internal/d2dui/grid"
-	"gcoletta.it/game-of-life/internal/game"
 	"gcoletta.it/game-of-life/internal/geom"
+	"gcoletta.it/game-of-life/internal/matrix"
 	"gcoletta.it/game-of-life/internal/patterns"
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
@@ -19,6 +19,7 @@ func init() {
 	runtime.LockOSThread()
 }
 
+type MatrixUpdater func(old matrix.Matrix[bool]) matrix.Matrix[bool]
 type Callbacks interface {
 	Quit()
 	Play()
@@ -28,9 +29,8 @@ type Callbacks interface {
 	SpeedDown()
 	Back()
 	Next()
-	Edit(updater game.MatrixUpdater)
+	Edit(updater MatrixUpdater)
 }
-
 type D2dui struct {
 	matrix        grid.GridMatrix
 	callback      Callbacks
