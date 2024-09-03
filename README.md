@@ -7,4 +7,6 @@ Run with `go run main.go <matrix-size>`, where `<matrix-size>` is a positive int
 * Use Spacebar to play/pause the game
 * Use Left and Right arrow keys to go back and forward in the game history
 * Use Top and Down arrow keys to increase and decrease speed
+* Use N and M to zoom in and out
+* Use WASD to navigate in the universe
 * Quit with Q key
