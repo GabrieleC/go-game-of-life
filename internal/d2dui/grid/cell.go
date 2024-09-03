@@ -8,8 +8,10 @@ import (
 	"github.com/llgcode/draw2d/draw2dkit"
 )
 
+type CellState byte
+
 type cell struct {
-	State  byte
+	State  CellState
 	Origin geom.Point
 	Size   int
 }
@@ -25,7 +27,7 @@ var (
 	shadowColor = color.RGBA{0, 0, 0, 0x33}
 )
 
-func colorByType(state byte) color.Color {
+func colorByType(state CellState) color.Color {
 	switch state {
 	case Alive:
 		return aliveColor

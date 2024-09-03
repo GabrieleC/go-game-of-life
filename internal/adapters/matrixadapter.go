@@ -5,13 +5,13 @@ import (
 	"gcoletta.it/game-of-life/internal/game"
 )
 
-func makeGridMatrix(matrix game.Matrix) grid.Matrix {
-	mtx := grid.NewMatrix(matrix.Rows(), matrix.Cols())
+func makeGridMatrix(matrix game.Matrix) grid.GridMatrix {
+	mtx := grid.NewGridMatrix(matrix.Rows(), matrix.Cols())
 	setAliveCells(matrix, mtx)
 	return mtx
 }
 
-func setAliveCells(matrix game.Matrix, mtx grid.Matrix) {
+func setAliveCells(matrix game.Matrix, mtx grid.GridMatrix) {
 	for rowId, row := range mtx {
 		for colId := range row {
 			if matrix[rowId][colId] {

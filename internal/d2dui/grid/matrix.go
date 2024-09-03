@@ -1,43 +1,33 @@
 package grid
 
 import (
-	"gcoletta.it/game-of-life/internal/game"
 	"gcoletta.it/game-of-life/internal/geom"
+	"gcoletta.it/game-of-life/internal/matrix"
+	"gcoletta.it/game-of-life/internal/patterns"
 )
 
-type Matrix [][]byte
+type GridMatrix matrix.Matrix[CellState]
 
-func NewMatrix(rows int, cols int) Matrix {
-	mtx := make(Matrix, rows)
-	for rowId := range mtx {
-		mtx[rowId] = make([]byte, cols)
-	}
-	return mtx
+func NewGridMatrix(rows int, cols int) GridMatrix {
+	return GridMatrix(matrix.Create[CellState](rows, cols))
 }
 
-func Dimension(matrix Matrix) (rows, cols int) {
-	rows = len(matrix)
-	if rows > 0 {
-		cols = len(matrix[0])
-	}
-	return rows, cols
+func Dimensions(mtx GridMatrix) (rows, cols int) {
+	return matrix.Dimensions(matrix.Matrix[CellState](mtx))
 }
 
-func Copy(matrix Matrix) Matrix {
-	duplicate := make([][]byte, len(matrix))
-	for i := range matrix {
-		duplicate[i] = make([]byte, len(matrix[i]))
-		copy(duplicate[i], matrix[i])
-	}
-	return duplicate
+func Copy(mtx GridMatrix) GridMatrix {
+	copied := matrix.Copy(matrix.Matrix[CellState](mtx))
+	return GridMatrix(copied)
 }
 
-type StateUpdater func(currentState byte) byte
+type StateUpdater func(currentState CellState) CellState
 
-func ApplyPattern(pattern game.Matrix, origin geom.Point, mtx Matrix, updater StateUpdater) {
-	rows, cols := Dimension(mtx)
-	for row := 0; row < pattern.Rows() && row+origin.Y < rows; row++ {
-		for col := 0; col < pattern.Cols() && col+origin.X < cols; col++ {
+func ApplyPattern(pattern patterns.Pattern, origin geom.Point, mtx GridMatrix, updater StateUpdater) {
+	rows, cols := matrix.Dimensions(matrix.Matrix[CellState](mtx))
+	patternRows, patternCols := matrix.Dimensions(matrix.Matrix[bool](pattern))
+	for row := 0; row < patternRows && row+origin.Y < rows; row++ {
+		for col := 0; col < patternCols && col+origin.X < cols; col++ {
 			if pattern[row][col] {
 				mtx[row+origin.Y][col+origin.X] = updater(mtx[row+origin.Y][col+origin.X])
 			}

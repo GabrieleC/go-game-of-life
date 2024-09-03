@@ -6,6 +6,7 @@ import (
 	"gcoletta.it/game-of-life/internal/d2dui/grid"
 	"gcoletta.it/game-of-life/internal/game"
 	"gcoletta.it/game-of-life/internal/geom"
+	"gcoletta.it/game-of-life/internal/patterns"
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/llgcode/draw2d/draw2dgl"
@@ -27,11 +28,11 @@ type Callbacks interface {
 	SpeedDown()
 	Back()
 	Next()
-	Edit(updater game.MatrixUpdater) // TODO
+	Edit(updater game.MatrixUpdater)
 }
 
 type D2dui struct {
-	matrix        grid.Matrix
+	matrix        grid.GridMatrix
 	callback      Callbacks
 	redraw        bool
 	stopRequested bool
@@ -116,7 +117,7 @@ func (ui *D2dui) SetCallback(callback Callbacks) {
 	ui.editor.callback = callback
 }
 
-func (ui *D2dui) UpdateMatrix(matrix grid.Matrix) {
+func (ui *D2dui) UpdateMatrix(matrix grid.GridMatrix) {
 	ui.matrix = matrix
 	ui.invalidate()
 }
@@ -223,14 +224,14 @@ func (ui *D2dui) onWindowClose(w *glfw.Window) {
 	ui.callback.Quit()
 }
 
-func applyEditorPattern(grd grid.Grid, mtx grid.Matrix, cursor geom.Point, pattern game.Matrix) {
+func applyEditorPattern(grd grid.Grid, mtx grid.GridMatrix, cursor geom.Point, pattern patterns.Pattern) {
 	origin, ok := grd.CanvasCoords(cursor)
 	if ok {
 		grid.ApplyPattern(pattern, origin, mtx, editorStateUpdater)
 	}
 }
 
-func editorStateUpdater(oldState byte) byte {
+func editorStateUpdater(oldState grid.CellState) grid.CellState {
 	if oldState == grid.Dead {
 		return grid.Shadow
 	}

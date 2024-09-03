@@ -3,7 +3,7 @@ package patterns
 import (
 	_ "embed"
 
-	"gcoletta.it/game-of-life/internal/game"
+	"gcoletta.it/game-of-life/internal/matrix"
 )
 
 //go:embed txt/glider.txt
@@ -27,32 +27,34 @@ var hwss string
 //go:embed txt/gosper.txt
 var gosper string
 
-type Pattern func(mtx game.Matrix, row, col int)
+type Writer func(mtx Pattern, row, col int)
 
-func Glider() game.Matrix {
+type Pattern matrix.Matrix[bool]
+
+func Glider() Pattern {
 	return unmarshal(glider)
 }
 
-func Pulsar() game.Matrix {
+func Pulsar() Pattern {
 	return unmarshal(pulsar)
 }
 
-func Block() game.Matrix {
+func Block() Pattern {
 	return unmarshal(block)
 }
 
-func LWSS() game.Matrix {
+func LWSS() Pattern {
 	return unmarshal(lwss)
 }
 
-func MWSS() game.Matrix {
+func MWSS() Pattern {
 	return unmarshal(mwss)
 }
 
-func HWSS() game.Matrix {
+func HWSS() Pattern {
 	return unmarshal(hwss)
 }
 
-func Gosper() game.Matrix {
+func Gosper() Pattern {
 	return unmarshal(gosper)
 }

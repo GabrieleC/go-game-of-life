@@ -2,10 +2,11 @@ package d2dui
 
 import (
 	"gcoletta.it/game-of-life/internal/game"
+	"gcoletta.it/game-of-life/internal/matrix"
 	"gcoletta.it/game-of-life/internal/patterns"
 )
 
-var editorPatterns = [...]game.Matrix{
+var editorPatterns = [...]patterns.Pattern{
 	nil, //dot
 	patterns.Block(),
 	patterns.Glider(),
@@ -29,16 +30,18 @@ func (e *editor) iteratePattern() {
 }
 
 func (e *editor) applyPattern(row, col int) {
-	e.callback.Edit(func(matrix game.Matrix) game.Matrix {
+	e.callback.Edit(func(mtx game.Matrix) game.Matrix {
 		pattern := editorPatterns[e.editorPatternIdx]
 		if pattern == nil {
-			matrix[row][col] = !matrix[row][col]
+			mtx[row][col] = !mtx[row][col]
 		}
-		matrix.Copy(pattern, row, col)
-		return matrix
+		b := matrix.Matrix[bool](mtx)
+		p := matrix.Matrix[bool](pattern)
+		matrix.Write(p, &b, row, col)
+		return mtx
 	})
 }
 
-func (e *editor) currentPattern() game.Matrix {
+func (e *editor) currentPattern() patterns.Pattern {
 	return editorPatterns[e.editorPatternIdx]
 }

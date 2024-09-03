@@ -13,7 +13,7 @@ const panAmount = 5
 const cellMaxSize = 100
 
 type Grid struct {
-	Matrix   Matrix
+	Matrix   GridMatrix
 	Canvas   geom.Area
 	Origin   geom.Point
 	CellSize int
@@ -23,7 +23,7 @@ func (grid Grid) CanvasCoords(point geom.Point) (geom.Point, bool) {
 	row := (point.Y + grid.Origin.Y) / grid.CellSize
 	col := (point.X + grid.Origin.X) / grid.CellSize
 
-	maxRows, maxCols := Dimension(grid.Matrix)
+	maxRows, maxCols := Dimensions(grid.Matrix)
 	if row > maxRows || col > maxCols {
 		return geom.Point{}, false
 	}
@@ -51,7 +51,7 @@ func (grd *Grid) PanUp() {
 }
 
 func (grd *Grid) PanDown() {
-	rows, _ := Dimension(grd.Matrix)
+	rows, _ := Dimensions(grd.Matrix)
 	maxy := (grd.CellSize * rows) - grd.Canvas.Height
 	grd.Origin.Y = min(grd.Origin.Y+grd.CellSize, maxy)
 }
@@ -61,13 +61,13 @@ func (grd *Grid) PanLeft() {
 }
 
 func (grd *Grid) PanRight() {
-	_, cols := Dimension(grd.Matrix)
+	_, cols := Dimensions(grd.Matrix)
 	maxx := (grd.CellSize * cols) - grd.Canvas.Width
 	grd.Origin.X = min(grd.Origin.X+grd.CellSize, maxx)
 }
 
 func drawGrid(gc *draw2dgl.GraphicContext, grid Grid) {
-	rows, cols := Dimension(grid.Matrix)
+	rows, cols := Dimensions(grid.Matrix)
 	gc.SetStrokeColor(gridColor)
 
 	firstCol := grid.Origin.X / grid.CellSize
@@ -97,7 +97,7 @@ func drawGrid(gc *draw2dgl.GraphicContext, grid Grid) {
 }
 
 func drawCells(gc *draw2dgl.GraphicContext, grid Grid) {
-	maxRow, maxCol := Dimension(grid.Matrix)
+	maxRow, maxCol := Dimensions(grid.Matrix)
 
 	for row := 0; row < maxRow; row++ {
 		for col := 0; col < maxCol; col++ {
