@@ -1,4 +1,4 @@
-package adapters
+package d2duiadapter
 
 import (
 	"gcoletta.it/game-of-life/internal/d2dui"

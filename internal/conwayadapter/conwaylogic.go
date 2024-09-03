@@ -1,4 +1,4 @@
-package adapters
+package conwayadapter
 
 import (
 	"gcoletta.it/game-of-life/internal/conwaylogic"
